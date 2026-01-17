@@ -259,7 +259,7 @@ func guestCREATE(c *Config, guest_name string, disk_store string,
 			log.Println("[guestCREATE] ovf_properties extra_params: " + extra_params)
 		}
 
-		ovf_cmd := fmt.Sprintf("ovftool --acceptAllEulas --allowExtraConfig --noSSLVerify --X:useMacNaming=false %s "+
+		ovf_cmd := fmt.Sprintf("ovftool --acceptAllEulas --allowExtraConfig  --noSSLVerify --X:useMacNaming=false %s "+
 			"-dm=%s --name='%s' --overwrite -ds='%s' %s '%s' '%s'", extra_params, boot_disk_type, guest_name, disk_store, net_param, src_path, dst_path)
 
 		if runtime.GOOS == "windows" {
