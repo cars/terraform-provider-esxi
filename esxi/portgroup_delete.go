@@ -9,22 +9,31 @@ import (
 
 func resourcePORTGROUPDelete(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Config)
-	esxiConnInfo := getConnectionInfo(c)
 	log.Println("[resourcePORTGROUPDelete]")
 
-	var remote_cmd, stdout string
-	var err error
-
 	name := d.Id()
-	vswitch := d.Get("vswitch").(string)
 
-	remote_cmd = fmt.Sprintf("esxcli network vswitch standard portgroup remove -v \"%s\" -p \"%s\"",
-		vswitch, name)
+	if c.useGovmomi {
+		err := portgroupDelete_govmomi(c, name)
+		if err != nil {
+			log.Printf("[resourcePORTGROUPDelete] Failed destroy PORTGROUP: %s\n", err)
+			return fmt.Errorf("Failed to destroy portgroup: %s\n", err)
+		}
+	} else {
+		esxiConnInfo := getConnectionInfo(c)
+		var remote_cmd, stdout string
+		var err error
 
-	stdout, err = runRemoteSshCommand(esxiConnInfo, remote_cmd, "destroy PORTGROUP")
-	if err != nil {
-		log.Printf("[resourcePORTGROUPDelete] Failed destroy PORTGROUP: %s\n", stdout)
-		return fmt.Errorf("Failed to destroy portgroup: %s\n%s\n", stdout, err)
+		vswitch := d.Get("vswitch").(string)
+
+		remote_cmd = fmt.Sprintf("esxcli network vswitch standard portgroup remove -v \"%s\" -p \"%s\"",
+			vswitch, name)
+
+		stdout, err = runRemoteSshCommand(esxiConnInfo, remote_cmd, "destroy PORTGROUP")
+		if err != nil {
+			log.Printf("[resourcePORTGROUPDelete] Failed destroy PORTGROUP: %s\n", stdout)
+			return fmt.Errorf("Failed to destroy portgroup: %s\n%s\n", stdout, err)
+		}
 	}
 
 	d.SetId("")
