@@ -99,21 +99,32 @@ func resourceRESOURCEPOOLCreate(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
-	parent_pool_id, err := getPoolID(c, parent_pool)
-	if err != nil {
-		d.SetId("")
-		return fmt.Errorf("Failed to get pool id: %s\n", err)
-	}
+	if c.useGovmomi {
+		// Use govmomi to create resource pool
+		pool_id, err = resourcePoolCreate_govmomi(c, resource_pool_name, cpu_min, cpu_min_expandable,
+			cpu_max, cpu_shares, mem_min, mem_min_expandable, mem_max, mem_shares, parent_pool)
+		if err != nil {
+			d.SetId("")
+			return fmt.Errorf("Failed to create pool: %s\n", err)
+		}
+	} else {
+		// Fallback to SSH
+		parent_pool_id, err := getPoolID(c, parent_pool)
+		if err != nil {
+			d.SetId("")
+			return fmt.Errorf("Failed to get pool id: %s\n", err)
+		}
 
-	remote_cmd = fmt.Sprintf("vim-cmd hostsvc/rsrc/create %s %s %s %s %s %s %s %s %s %s",
-		cpu_min_opt, cpu_min_expandable_opt, cpu_max_opt, cpu_shares_opt,
-		mem_min_opt, mem_min_expandable_opt, mem_max_opt, mem_shares_opt, parent_pool_id, resource_pool_name)
+		remote_cmd = fmt.Sprintf("vim-cmd hostsvc/rsrc/create %s %s %s %s %s %s %s %s %s %s",
+			cpu_min_opt, cpu_min_expandable_opt, cpu_max_opt, cpu_shares_opt,
+			mem_min_opt, mem_min_expandable_opt, mem_max_opt, mem_shares_opt, parent_pool_id, resource_pool_name)
 
-	_, err = runRemoteSshCommand(esxiConnInfo, remote_cmd, "create resource pool")
-	pool_id, _ = getPoolID(c, resource_pool_name)
-	if err != nil {
-		d.SetId("")
-		return fmt.Errorf("Failed to get pool id: %s\n", err)
+		_, err = runRemoteSshCommand(esxiConnInfo, remote_cmd, "create resource pool")
+		pool_id, _ = getPoolID(c, resource_pool_name)
+		if err != nil {
+			d.SetId("")
+			return fmt.Errorf("Failed to get pool id: %s\n", err)
+		}
 	}
 
 	//  Set pool_id

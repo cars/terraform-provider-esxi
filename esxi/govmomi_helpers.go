@@ -3,6 +3,7 @@ package esxi
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/vmware/govmomi/find"
@@ -216,4 +217,63 @@ func getHostNetworkSystem(ctx context.Context, host *object.HostSystem) (*object
 		return nil, fmt.Errorf("failed to get network system: %w", err)
 	}
 	return ns, nil
+}
+
+// getRootResourcePool returns the root resource pool for standalone ESXi
+func getRootResourcePool(ctx context.Context, finder *find.Finder) (*object.ResourcePool, error) {
+	pool, err := finder.DefaultResourcePool(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find root resource pool: %w", err)
+	}
+	return pool, nil
+}
+
+// findResourcePoolByPath finds a resource pool by its path (e.g., "Pool1" or "Pool1/SubPool")
+func findResourcePoolByPath(ctx context.Context, rootPool *object.ResourcePool, path string) (*object.ResourcePool, error) {
+	if path == "/" || path == "Resources" || path == "" {
+		return rootPool, nil
+	}
+
+	// Remove leading slash if present
+	path = strings.TrimPrefix(path, "/")
+
+	// Split path into segments
+	segments := strings.Split(path, "/")
+
+	currentPool := rootPool
+	for _, segment := range segments {
+		if segment == "" || segment == "Resources" {
+			continue
+		}
+
+		// Get child resource pools
+		var poolMo mo.ResourcePool
+		err := currentPool.Properties(ctx, currentPool.Reference(), []string{"resourcePool"}, &poolMo)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get resource pool properties: %w", err)
+		}
+
+		// Find the child pool with the matching name
+		var found *object.ResourcePool
+		for _, childRef := range poolMo.ResourcePool {
+			childPool := object.NewResourcePool(currentPool.Client(), childRef)
+			var childMo mo.ResourcePool
+			err := childPool.Properties(ctx, childPool.Reference(), []string{"name"}, &childMo)
+			if err != nil {
+				continue
+			}
+			if childMo.Name == segment {
+				found = childPool
+				break
+			}
+		}
+
+		if found == nil {
+			return nil, fmt.Errorf("resource pool '%s' not found in path '%s'", segment, path)
+		}
+
+		currentPool = found
+	}
+
+	return currentPool, nil
 }
