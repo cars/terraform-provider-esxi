@@ -26,7 +26,7 @@ You first must set your GOPATH.   If you are unsure, please review the documenta
 >https://github.com/golang/go/wiki/SettingGOPATH
 
 
-Clone repository to: `$GOPATH/src/github.com/josenk/terraform-provider-esxi`
+Clone repository to: `$GOPATH/src/github.com/cars/terraform-provider-esxi`
 
 ```sh
 
@@ -35,9 +35,9 @@ export GOPATH="$HOME/go"
 
 go get -u -v golang.org/x/crypto/ssh
 go get -u -v github.com/hashicorp/terraform
-go get -u -v github.com/josenk/terraform-provider-esxi
+go get -u -v github.com/cars/terraform-provider-esxi
 
-cd $GOPATH/src/github.com/josenk/terraform-provider-esxi
+cd $GOPATH/src/github.com/cars/terraform-provider-esxi
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-w -extldflags "-static"' -o terraform-provider-esxi_`cat version`
 
 sudo cp terraform-provider-esxi_`cat version` /usr/local/bin
@@ -61,7 +61,7 @@ What's New:
 * v1.9.0 Changed default hwversion from 8 to 13.  NOTE that this is a possible breaking change if you are using versions of ESXi older than 6.5.
 * v1.8.0 added vswitch and portgroup resources.
 * v1.7.1 added Terraform 0.13 support.  This provider is now in the terraform registry.
->https://registry.terraform.io/providers/josenk/esxi
+>https://registry.terraform.io/providers/cars/esxi
 
 
 Features and Compatibility
@@ -73,6 +73,7 @@ Features and Compatibility
 * Terraform will Create, Destroy, Update & Import Extra Storage for Guests.
 * Terraform will Create, Destroy, Update & Import vSwitches.
 * Terraform will Create, Destroy, Update & Import Port Groups.
+* Data source support for querying existing Guest VMs.
 
 
 This is a provider!  NOT a provisioner.
@@ -81,15 +82,15 @@ This is a provider!  NOT a provisioner.
 * To configure your guest VM after it's built, you need to use a provisioner.
   * Refer to Hashicorp list of provisioners: https://www.terraform.io/docs/provisioners/index.html
 * To help you get started, there is are examples in a separate repo I created.   You can create a Pull Request if you would like to contribute.
-  * https://github.com/josenk/terraform-provider-esxi-wiki
+  * https://github.com/cars/terraform-provider-esxi-wiki
 
 
 Vagrant vs Terraform.
 ---------------------
 If you are using vagrant as a deployment tool (infa as code), you may want to consider a better tool.  Terraform.  Vagrant is better for development environments, while Terraform is better at managing infrastructure.  Please give my terraform plugin a try and give me some feedback.  What you're trying to do, what's missing, what works, what doesn't work, etc...
 >https://www.vagrantup.com/intro/vs/terraform.html
->https://github.com/josenk/terraform-provider-esxi
->https://github.com/josenk/vagrant-vmware-esxi
+>https://github.com/cars/terraform-provider-esxi
+>https://github.com/cars/vagrant-vmware-esxi
 
 
 Why this plugin?
@@ -108,17 +109,17 @@ terraform {
   required_version = ">= 0.13"
   required_providers {
     esxi = {
-      source = "registry.terraform.io/josenk/esxi"
+      source = "registry.terraform.io/cars/esxi"
       #
       # For more information, see the provider source documentation:
-      # https://github.com/josenk/terraform-provider-esxi
-      # https://registry.terraform.io/providers/josenk/esxi
+      # https://github.com/cars/terraform-provider-esxi
+      # https://registry.terraform.io/providers/cars/esxi
     }
   }
 }
 ```
 * Manual installation (Terraform 0.11.x or 0.12.x only)
-  * Download pre-built binaries from https://github.com/josenk/terraform-provider-esxi/releases.  Place a copy of it in your path or current directory of your terraform project.
+  * Download pre-built binaries from https://github.com/cars/terraform-provider-esxi/releases.  Place a copy of it in your path or current directory of your terraform project.
 
 
 
@@ -167,11 +168,32 @@ Basic usage
 Configuration reference
 -----------------------
 * provider "esxi"
-  * esxi_hostname - Required
-  * esxi_hostport - Optional - Default "22".
-  * esxi_hostssl - Optional - Default "443".
-  * esxi_username - Optional - Default "root".
-  * esxi_password - Required
+  * esxi_hostname - Required - ESXi hostname or IP address.
+  * esxi_hostport - Optional - SSH port. Default "22".
+  * esxi_hostssl - Optional - SSL port. Default "443".
+  * esxi_username - Optional - SSH username. Default "root".
+  * esxi_password - Required - SSH password.
+  * private_key - Optional - Path to SSH private key file.
+
+### Environment Variables
+
+All provider configuration parameters can be set via environment variables using uppercase names:
+
+* `ESXI_HOSTNAME` - ESXi hostname or IP address
+* `ESXI_HOSTPORT` - SSH port (default: "22")
+* `ESXI_HOSTSSL` - SSL port (default: "443")
+* `ESXI_USERNAME` - SSH username (default: "root")
+* `ESXI_PASSWORD` - SSH password
+* `PRIVATE_KEY` - Path to SSH private key file
+
+Example:
+```bash
+export ESXI_HOSTNAME="192.168.1.10"
+export ESXI_USERNAME="root"
+export ESXI_PASSWORD="MyPassword"
+
+terraform apply
+```
 
 
 * resource "esxi_resource_pool"
@@ -244,9 +266,41 @@ Configuration reference
 
 
 * resource "esxi_portgroup"
-  * name - Required - The portgroup name.    
+  * name - Required - The portgroup name.
   * vswitch - Required - The vswitch to connect to.
   * vlan - Optional - The vlan id of the portgroup - Default 0.
+
+
+* data "esxi_guest"
+  * guest_name - Optional - The name of the guest VM to look up. Conflicts with vmid.
+  * vmid - Optional - The VM ID to look up. Conflicts with guest_name.
+  * Computed attributes:
+    * boot_firmware - Boot firmware type (bios or efi).
+    * disk_store - ESXi datastore where boot disk is located.
+    * resource_pool_name - Resource pool name where guest is located.
+    * boot_disk_type - Guest boot disk type (thin, zeroedthick, eagerzeroedthick).
+    * boot_disk_size - Guest boot disk size in GB.
+    * memsize - Guest memory size in MB.
+    * numvcpus - Guest number of virtual CPUs.
+    * virthwver - Guest virtual hardware version.
+    * guestos - Guest OS type.
+    * network_interfaces - List of network interfaces with virtual_network, mac_address, and nic_type.
+    * power - Guest power state.
+    * ip_address - The IP address reported by VMware tools.
+    * virtual_disks - List of attached virtual disks with virtual_disk_id and slot.
+    * notes - Guest notes (annotation).
+    * guestinfo - Guest info variables.
+
+  Example:
+  ```hcl
+  data "esxi_guest" "existing_vm" {
+    guest_name = "my-existing-vm"
+  }
+
+  output "vm_ip" {
+    value = data.esxi_guest.existing_vm.ip_address
+  }
+  ```
 
 
 Using ovf_source & clone_from_vm
@@ -277,7 +331,7 @@ Donations
 ---------
 I work very hard to produce a stable, well documented product.  I appreciate any payments or donations for my efforts.
 * Bitcoin: 1Kt89337143SzLjSddkRDVEMBRUWoKQhqy
-* paypal:  josenk at jintegrate.co
+* paypal:  cars at jintegrate.co
 
 
 Version History
