@@ -1,3 +1,7 @@
+# Provider binaries
+terraform-provider-esxi
+terraform-provider-esxi.exe
+
 # Terraform state files
 *.tfstate
 *.tfstate.*
