@@ -63,6 +63,9 @@ func Provider() terraform.ResourceProvider {
 			"esxi_vswitch":       resourceVSWITCH(),
 			"esxi_portgroup":     resourcePORTGROUP(),
 		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"esxi_guest": dataSourceGuest(),
+		},
 		ConfigureFunc: configureProvider,
 	}
 }
