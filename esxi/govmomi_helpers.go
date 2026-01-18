@@ -208,3 +208,12 @@ func reconfigureVM(ctx context.Context, vm *object.VirtualMachine, spec types.Vi
 
 	return nil
 }
+
+// getHostNetworkSystem returns the network system for the host
+func getHostNetworkSystem(ctx context.Context, host *object.HostSystem) (*object.HostNetworkSystem, error) {
+	ns, err := host.ConfigManager().NetworkSystem(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get network system: %w", err)
+	}
+	return ns, nil
+}
