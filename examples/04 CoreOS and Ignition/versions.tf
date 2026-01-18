@@ -7,7 +7,7 @@ terraform {
       #
       # For more information, see the provider source documentation:
       #
-      # https://github.com/josenk/terraform-provider-esxi
+      # https://github.com/cars/terraform-provider-esxi
       # https://registry.terraform.io/providers/josenk/esxi
       #
     }
