@@ -9,20 +9,29 @@ import (
 
 func resourceRESOURCEPOOLDelete(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Config)
-	esxiConnInfo := getConnectionInfo(c)
 	log.Println("[resourceRESOURCEPOOLDelete]")
-
-	var remote_cmd, stdout string
-	var err error
 
 	pool_id := d.Id()
 
-	remote_cmd = fmt.Sprintf("vim-cmd hostsvc/rsrc/destroy %s", pool_id)
-	stdout, err = runRemoteSshCommand(esxiConnInfo, remote_cmd, "destroy resource pool")
-	if err != nil {
-		// todo more descriptive err message
-		log.Printf("[resourcePoolDELETE] Failed destroy resource pool id: %s\n", stdout)
-		return fmt.Errorf("Failed to delete pool: %s\n", err)
+	if c.useGovmomi {
+		// Use govmomi to delete resource pool
+		err := resourcePoolDelete_govmomi(c, pool_id)
+		if err != nil {
+			log.Printf("[resourceRESOURCEPOOLDelete] Failed destroy resource pool id: %s\n", pool_id)
+			return fmt.Errorf("Failed to delete pool: %s\n", err)
+		}
+	} else {
+		// Fallback to SSH
+		esxiConnInfo := getConnectionInfo(c)
+		var remote_cmd, stdout string
+		var err error
+
+		remote_cmd = fmt.Sprintf("vim-cmd hostsvc/rsrc/destroy %s", pool_id)
+		stdout, err = runRemoteSshCommand(esxiConnInfo, remote_cmd, "destroy resource pool")
+		if err != nil {
+			log.Printf("[resourceRESOURCEPOOLDelete] Failed destroy resource pool id: %s\n", stdout)
+			return fmt.Errorf("Failed to delete pool: %s\n", err)
+		}
 	}
 
 	d.SetId("")

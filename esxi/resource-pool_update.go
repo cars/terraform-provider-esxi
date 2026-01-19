@@ -98,15 +98,25 @@ func resourceRESOURCEPOOLUpdate(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
-	remote_cmd = fmt.Sprintf("vim-cmd hostsvc/rsrc/pool_config_set %s %s %s %s %s %s %s %s %s",
-		cpu_min_opt, cpu_min_expandable_opt, cpu_max_opt, cpu_shares_opt,
-		mem_min_opt, mem_min_expandable_opt, mem_max_opt, mem_shares_opt, pool_id)
+	if c.useGovmomi {
+		// Use govmomi to update resource pool
+		err = resourcePoolUpdate_govmomi(c, pool_id, resource_pool_name, cpu_min, cpu_min_expandable,
+			cpu_max, cpu_shares, mem_min, mem_min_expandable, mem_max, mem_shares)
+		if err != nil {
+			return fmt.Errorf("Failed to update pool: %s\n", err)
+		}
+	} else {
+		// Fallback to SSH
+		remote_cmd = fmt.Sprintf("vim-cmd hostsvc/rsrc/pool_config_set %s %s %s %s %s %s %s %s %s",
+			cpu_min_opt, cpu_min_expandable_opt, cpu_max_opt, cpu_shares_opt,
+			mem_min_opt, mem_min_expandable_opt, mem_max_opt, mem_shares_opt, pool_id)
 
-	stdout, err = runRemoteSshCommand(esxiConnInfo, remote_cmd, "update resource pool")
-	log.Printf("[resourcePoolUPDATE] stdout |%s|\n", stdout)
+		stdout, err = runRemoteSshCommand(esxiConnInfo, remote_cmd, "update resource pool")
+		log.Printf("[resourcePoolUPDATE] stdout |%s|\n", stdout)
 
-	r := strings.NewReplacer("'vim.ResourcePool:", "", "'", "")
-	stdout = r.Replace(stdout)
+		r := strings.NewReplacer("'vim.ResourcePool:", "", "'", "")
+		stdout = r.Replace(stdout)
+	}
 
 	// Refresh
 	resource_pool_name, cpu_min, cpu_min_expandable, cpu_max, cpu_shares, mem_min, mem_min_expandable, mem_max, mem_shares, err = resourcePoolRead(c, pool_id)

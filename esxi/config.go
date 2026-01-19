@@ -12,6 +12,38 @@ type Config struct {
 	esxiUserName    string
 	esxiPassword    string
 	esxiPrivateKeyPath string
+
+	// New fields for govmomi
+	govmomiClient *GovmomiClient  // Cached client connection
+	useGovmomi    bool            // Feature flag for phased migration
+}
+
+// GetGovmomiClient returns cached client or creates new one
+func (c *Config) GetGovmomiClient() (*GovmomiClient, error) {
+	if c.govmomiClient == nil {
+		client, err := NewGovmomiClient(c)
+		if err != nil {
+			return nil, err
+		}
+		c.govmomiClient = client
+	} else {
+		// Check if session is still active, reconnect if needed
+		err := c.govmomiClient.Reconnect(c)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.govmomiClient, nil
+}
+
+// CloseGovmomiClient closes the cached govmomi client
+func (c *Config) CloseGovmomiClient() error {
+	if c.govmomiClient != nil {
+		err := c.govmomiClient.Close()
+		c.govmomiClient = nil
+		return err
+	}
+	return nil
 }
 
 func (c *Config) validateEsxiCreds() error {
