@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 func resourceGUESTRead(d *schema.ResourceData, m interface{}) error {
@@ -85,6 +87,12 @@ func resourceGUESTRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func guestREAD(c *Config, vmid string, guest_startup_timeout int) (string, string, string, string, string, string, string, string, string, string, [10][3]string, string, [60][2]string, string, string, map[string]interface{}, error) {
+	// Use govmomi if enabled
+	if c.useGovmomi {
+		return guestREAD_govmomi(c, vmid, guest_startup_timeout)
+	}
+
+	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Println("[guestREAD]")
 
@@ -294,5 +302,213 @@ func guestREAD(c *Config, vmid string, guest_startup_timeout int) (string, strin
 	}
 
 	// return results
+	return guest_name, disk_store, str_disk_size, virtual_disk_type, resource_pool_name, memsize, numvcpus, virthwver, guestos, ip_address, virtual_networks, boot_firmware, virtual_disks, power, notes, guestinfo, err
+}
+
+// guestREAD_govmomi reads VM properties using govmomi
+func guestREAD_govmomi(c *Config, vmid string, guest_startup_timeout int) (string, string, string, string, string, string, string, string, string, string, [10][3]string, string, [60][2]string, string, string, map[string]interface{}, error) {
+	log.Println("[guestREAD_govmomi]")
+
+	var guest_name, disk_store, virtual_disk_type, resource_pool_name, guestos, ip_address, notes string
+	var disk_size int
+	var memsize, numvcpus, virthwver string
+	var virtual_networks [10][3]string
+	var boot_firmware string = "bios"
+	var virtual_disks [60][2]string
+	var guestinfo map[string]interface{}
+	var power string
+
+	gc, err := c.GetGovmomiClient()
+	if err != nil {
+		return "", "", "", "", "", "", "", "", "", "", virtual_networks, "", virtual_disks, "", "", nil, err
+	}
+
+	vm, err := getVMByID(gc, vmid)
+	if err != nil {
+		return "", "", "", "", "", "", "", "", "", "", virtual_networks, "", virtual_disks, "", "", nil, err
+	}
+
+	// Get VM properties
+	var mvm mo.VirtualMachine
+	err = vm.Properties(gc.Context(), vm.Reference(), []string{
+		"name",
+		"config",
+		"runtime",
+		"guest",
+		"resourcePool",
+	}, &mvm)
+	if err != nil {
+		return "", "", "", "", "", "", "", "", "", "", virtual_networks, "", virtual_disks, "", "", nil, fmt.Errorf("failed to get VM properties: %w", err)
+	}
+
+	// Basic properties
+	guest_name = mvm.Name
+	memsize = fmt.Sprintf("%d", mvm.Config.Hardware.MemoryMB)
+	numvcpus = fmt.Sprintf("%d", mvm.Config.Hardware.NumCPU)
+	virthwver = strings.TrimPrefix(mvm.Config.Version, "vmx-")
+	guestos = mvm.Config.GuestId
+	notes = mvm.Config.Annotation
+
+	// Get datastore name from VM files
+	if len(mvm.Config.Files.VmPathName) > 0 {
+		// VmPathName format: "[datastore] path/to/vm.vmx"
+		vmPathName := mvm.Config.Files.VmPathName
+		if idx := strings.Index(vmPathName, "["); idx >= 0 {
+			if endIdx := strings.Index(vmPathName, "]"); endIdx > idx {
+				disk_store = vmPathName[idx+1 : endIdx]
+			}
+		}
+	}
+
+	// Boot firmware
+	if mvm.Config.Firmware != "" {
+		boot_firmware = strings.ToLower(mvm.Config.Firmware)
+	}
+
+	// Get network interfaces
+	nicIndex := 0
+	for _, device := range mvm.Config.Hardware.Device {
+		if nic, ok := device.(types.BaseVirtualEthernetCard); ok {
+			if nicIndex >= 10 {
+				break
+			}
+
+			ethCard := nic.GetVirtualEthernetCard()
+
+			// Get network name
+			if backing, ok := ethCard.Backing.(*types.VirtualEthernetCardNetworkBackingInfo); ok {
+				if backing.DeviceName != "" {
+					virtual_networks[nicIndex][0] = backing.DeviceName
+				}
+			} else if backing, ok := ethCard.Backing.(*types.VirtualEthernetCardDistributedVirtualPortBackingInfo); ok {
+				// DVS port group
+				if backing.Port.PortgroupKey != "" {
+					virtual_networks[nicIndex][0] = backing.Port.PortgroupKey
+				}
+			}
+
+			// Get MAC address (only if statically assigned)
+			if ethCard.AddressType == string(types.VirtualEthernetCardMacTypeManual) ||
+			   ethCard.AddressType == string(types.VirtualEthernetCardMacTypeAssigned) {
+				virtual_networks[nicIndex][1] = ethCard.MacAddress
+			}
+
+			// Get NIC type
+			switch nic.(type) {
+			case *types.VirtualE1000:
+				virtual_networks[nicIndex][2] = "e1000"
+			case *types.VirtualE1000e:
+				virtual_networks[nicIndex][2] = "e1000e"
+			case *types.VirtualVmxnet3:
+				virtual_networks[nicIndex][2] = "vmxnet3"
+			case *types.VirtualVmxnet2:
+				virtual_networks[nicIndex][2] = "vmxnet2"
+			case *types.VirtualPCNet32:
+				virtual_networks[nicIndex][2] = "pcnet32"
+			default:
+				virtual_networks[nicIndex][2] = "unknown"
+			}
+
+			nicIndex++
+		}
+	}
+
+	// Get virtual disks (excluding boot disk)
+	diskIndex := 0
+	for _, device := range mvm.Config.Hardware.Device {
+		if disk, ok := device.(*types.VirtualDisk); ok {
+			// Skip boot disk (scsi0:0)
+			if disk.UnitNumber != nil && *disk.UnitNumber == 0 {
+				if ctlr := disk.ControllerKey; ctlr == 1000 { // SCSI controller 0
+					continue
+				}
+			}
+
+			if diskIndex >= 60 {
+				break
+			}
+
+			// Get disk backing filename
+			if backing, ok := disk.Backing.(*types.VirtualDiskFlatVer2BackingInfo); ok {
+				virtual_disks[diskIndex][0] = backing.FileName
+
+				// Get slot (controller:unit)
+				if disk.UnitNumber != nil {
+					controllerNum := (disk.ControllerKey - 1000) / 1000
+					virtual_disks[diskIndex][1] = fmt.Sprintf("%d:%d", controllerNum, *disk.UnitNumber)
+				}
+			}
+
+			diskIndex++
+		}
+	}
+
+	// Get boot disk info
+	for _, device := range mvm.Config.Hardware.Device {
+		if disk, ok := device.(*types.VirtualDisk); ok {
+			// Find boot disk (scsi0:0)
+			if disk.UnitNumber != nil && *disk.UnitNumber == 0 {
+				if ctlr := disk.ControllerKey; ctlr == 1000 { // SCSI controller 0
+					if backing, ok := disk.Backing.(*types.VirtualDiskFlatVer2BackingInfo); ok {
+						// Convert capacity from bytes to GB
+						disk_size = int(disk.CapacityInBytes / (1024 * 1024 * 1024))
+
+						// Determine disk type
+						if backing.ThinProvisioned != nil && *backing.ThinProvisioned {
+							virtual_disk_type = "thin"
+						} else if backing.EagerlyScrub != nil && *backing.EagerlyScrub {
+							virtual_disk_type = "eagerzeroedthick"
+						} else {
+							virtual_disk_type = "zeroedthick"
+						}
+					}
+					break
+				}
+			}
+		}
+	}
+
+	// Get resource pool name
+	if mvm.ResourcePool != nil {
+		rpRef := *mvm.ResourcePool
+		rp := mo.ResourcePool{}
+		err = gc.Client.RetrieveOne(gc.Context(), rpRef, []string{"name", "parent"}, &rp)
+		if err == nil {
+			resource_pool_name = rp.Name
+			// If it's the root resource pool, use empty string
+			if resource_pool_name == "Resources" {
+				resource_pool_name = ""
+			}
+		}
+	}
+
+	// Get guestinfo extraConfig values
+	guestinfo = make(map[string]interface{})
+	for _, opt := range mvm.Config.ExtraConfig {
+		if optVal, ok := opt.(*types.OptionValue); ok {
+			key := optVal.Key
+			if strings.HasPrefix(key, "guestinfo.") {
+				shortKey := strings.TrimPrefix(key, "guestinfo.")
+				if val, ok := optVal.Value.(string); ok {
+					guestinfo[shortKey] = val
+				}
+			}
+		}
+	}
+
+	// Get power state
+	power = guestPowerGetState_govmomi(c, vmid)
+
+	// Get IP address if powered on
+	if power == "on" {
+		ip_address = guestGetIpAddress_govmomi(c, vmid, guest_startup_timeout)
+		log.Printf("[guestREAD_govmomi] guestGetIpAddress: %s\n", ip_address)
+	} else {
+		ip_address = ""
+	}
+
+	str_disk_size := strconv.Itoa(disk_size)
+
+	// Return results
 	return guest_name, disk_store, str_disk_size, virtual_disk_type, resource_pool_name, memsize, numvcpus, virthwver, guestos, ip_address, virtual_networks, boot_firmware, virtual_disks, power, notes, guestinfo, err
 }

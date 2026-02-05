@@ -133,6 +133,212 @@ func dataSourceGuest() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"pci_controllers": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "PCI controllers (SCSI, IDE, SATA, NVMe).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"label": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"summary": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"key": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+					},
+				},
+			},
+			"network_adapters": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Network adapters with detailed device info.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"label": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"summary": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"mac_address": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"address_type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"key": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"connected": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
+						"start_connected": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
+					},
+				},
+			},
+			"disk_drives": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Virtual disk drives.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"label": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"summary": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"key": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"controller_key": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"unit_number": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"capacity_gb": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"thin_provisioned": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
+						"file_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
+			"cdrom_drives": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "CD/DVD-ROM drives.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"label": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"summary": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"key": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"controller_key": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"unit_number": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+					},
+				},
+			},
+			"video_cards": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Video cards.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"label": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"summary": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"key": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"video_ram_kb": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+					},
+				},
+			},
+			"usb_devices": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "USB controllers.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"label": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"summary": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"key": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -237,6 +443,21 @@ func dataSourceGuestRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 	d.Set("virtual_disks", vdisks)
+
+	// Read device info (govmomi only)
+	if c.useGovmomi {
+		deviceInfo, err := guestReadDevices_govmomi(c, vmid)
+		if err != nil {
+			log.Printf("[dataSourceGuestRead] Warning: failed to read device info: %s", err)
+		} else {
+			d.Set("pci_controllers", deviceInfo.PCIControllers)
+			d.Set("network_adapters", deviceInfo.NetworkAdapters)
+			d.Set("disk_drives", deviceInfo.DiskDrives)
+			d.Set("cdrom_drives", deviceInfo.CDROMDrives)
+			d.Set("video_cards", deviceInfo.VideoCards)
+			d.Set("usb_devices", deviceInfo.USBDevices)
+		}
+	}
 
 	return nil
 }
