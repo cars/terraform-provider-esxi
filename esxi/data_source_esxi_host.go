@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/vmware/govmomi/vim25/mo"
 )
 
 func dataSourceEsxiHost() *schema.Resource {
@@ -311,4 +312,91 @@ func getDatastoresSSH(esxiConnInfo ConnectionStruct) ([]map[string]interface{}, 
 	}
 
 	return datastores, nil
+}
+
+func dataSourceEsxiHostReadGovmomi(d *schema.ResourceData, c *Config) error {
+	gc, err := c.GetGovmomiClient()
+	if err != nil {
+		return fmt.Errorf("Failed to get govmomi client: %s", err)
+	}
+
+	ctx := gc.Context()
+
+	// Get host system (standalone ESXi has one default host)
+	host, err := getHostSystem(ctx, gc.Finder)
+	if err != nil {
+		return fmt.Errorf("Failed to get host system: %s", err)
+	}
+
+	// Retrieve host properties in a single API call
+	var hostMo mo.HostSystem
+	err = host.Properties(ctx, host.Reference(), []string{
+		"summary.hardware",
+		"summary.config",
+		"hardware.systemInfo",
+	}, &hostMo)
+	if err != nil {
+		return fmt.Errorf("Failed to get host properties: %s", err)
+	}
+
+	// Set ID and hostname
+	d.SetId(c.esxiHostName)
+	d.Set("hostname", c.esxiHostName)
+
+	// Map host properties to schema fields
+	if hostMo.Summary.Config.Product != nil {
+		d.Set("version", fmt.Sprintf("%s-%s", hostMo.Summary.Config.Product.Version, hostMo.Summary.Config.Product.Build))
+		d.Set("product_name", hostMo.Summary.Config.Product.FullName)
+	}
+
+	if hostMo.Summary.Hardware != nil {
+		hw := hostMo.Summary.Hardware
+		d.Set("uuid", hw.Uuid)
+		d.Set("cpu_model", hw.CpuModel)
+		d.Set("cpu_packages", int(hw.NumCpuPkgs))
+		d.Set("cpu_cores", int(hw.NumCpuCores))
+		d.Set("cpu_threads", int(hw.NumCpuThreads))
+		d.Set("cpu_mhz", int(hw.CpuMhz))
+		d.Set("memory_size", int(hw.MemorySize/(1024*1024)))
+	}
+
+	if hostMo.Hardware != nil {
+		d.Set("manufacturer", hostMo.Hardware.SystemInfo.Vendor)
+		d.Set("model", hostMo.Hardware.SystemInfo.Model)
+		if len(hostMo.Hardware.SystemInfo.SerialNumber) > 0 {
+			d.Set("serial_number", hostMo.Hardware.SystemInfo.SerialNumber)
+		}
+	}
+
+	// Retrieve datastores using Finder (established pattern from govmomi_helpers_test.go)
+	var datastores []map[string]interface{}
+	dsList, err := gc.Finder.DatastoreList(ctx, "*")
+	if err != nil {
+		log.Printf("[dataSourceEsxiHostReadGovmomi] Warning: failed to list datastores: %s", err)
+		dsList = nil
+	}
+
+	for _, ds := range dsList {
+		var dsMo mo.Datastore
+		err := ds.Properties(ctx, ds.Reference(), []string{"summary"}, &dsMo)
+		if err != nil {
+			log.Printf("[dataSourceEsxiHostReadGovmomi] Warning: failed to get datastore properties: %s", err)
+			continue
+		}
+
+		dsEntry := map[string]interface{}{
+			"name":        dsMo.Summary.Name,
+			"type":        dsMo.Summary.Type,
+			"capacity_gb": int(dsMo.Summary.Capacity / (1024 * 1024 * 1024)),
+			"free_gb":     int(dsMo.Summary.FreeSpace / (1024 * 1024 * 1024)),
+		}
+		datastores = append(datastores, dsEntry)
+	}
+	if datastores == nil {
+		datastores = []map[string]interface{}{}
+	}
+	d.Set("datastores", datastores)
+
+	log.Printf("[dataSourceEsxiHostReadGovmomi] Successfully read ESXi host '%s'", c.esxiHostName)
+	return nil
 }
