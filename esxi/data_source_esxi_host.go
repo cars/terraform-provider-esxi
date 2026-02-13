@@ -167,7 +167,7 @@ func dataSourceEsxiHostReadSSH(d *schema.ResourceData, c *Config) error {
 	return nil
 }
 
-func getHostInfoSSH(esxiConnInfo map[string]string) (string, string, string, error) {
+func getHostInfoSSH(esxiConnInfo ConnectionStruct) (string, string, string, error) {
 	remote_cmd := "vmware -vl"
 	stdout, err := runRemoteSshCommand(esxiConnInfo, remote_cmd, "get host version info")
 	if err != nil {
@@ -202,7 +202,7 @@ func getHostInfoSSH(esxiConnInfo map[string]string) (string, string, string, err
 	return version, productName, uuid, nil
 }
 
-func getHardwareInfoSSH(esxiConnInfo map[string]string) (string, string, string, string, int, int, int, int, int, error) {
+func getHardwareInfoSSH(esxiConnInfo ConnectionStruct) (string, string, string, string, int, int, int, int, int, error) {
 	remote_cmd := "dmidecode -t system"
 	stdout, err := runRemoteSshCommand(esxiConnInfo, remote_cmd, "get system info")
 	if err != nil {
@@ -285,7 +285,7 @@ func getHardwareInfoSSH(esxiConnInfo map[string]string) (string, string, string,
 	return manufacturer, model, serialNumber, cpuModel, cpuPackages, cpuCores, cpuThreads, cpuMhz, memorySize, nil
 }
 
-func getDatastoresSSH(esxiConnInfo map[string]string) ([]map[string]interface{}, error) {
+func getDatastoresSSH(esxiConnInfo ConnectionStruct) ([]map[string]interface{}, error) {
 	remote_cmd := "esxcli storage filesystem list"
 	stdout, err := runRemoteSshCommand(esxiConnInfo, remote_cmd, "get datastores")
 	if err != nil {
