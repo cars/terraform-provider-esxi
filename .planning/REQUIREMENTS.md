@@ -9,9 +9,9 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Build Fix
 
-- [ ] **BUILD-01**: Provider compiles without errors (`go build ./...` succeeds)
-- [ ] **BUILD-02**: Implement `dataSourceEsxiHostReadGovmomi` function for esxi_host data source
-- [ ] **BUILD-03**: All existing tests pass after build fix (`go test ./esxi/ -v`)
+- [x] **BUILD-01**: Provider compiles without errors (`go build ./...` succeeds)
+- [x] **BUILD-02**: Implement `dataSourceEsxiHostReadGovmomi` function for esxi_host data source
+- [x] **BUILD-03**: All existing tests pass after build fix (`go test ./esxi/ -v`)
 
 ### Portgroup SSH Removal
 
@@ -81,9 +81,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BUILD-01 | Phase 1 | Pending |
-| BUILD-02 | Phase 1 | Pending |
-| BUILD-03 | Phase 1 | Pending |
+| BUILD-01 | Phase 1 | ✓ Complete |
+| BUILD-02 | Phase 1 | ✓ Complete |
+| BUILD-03 | Phase 1 | ✓ Complete |
 | PORT-01 | Phase 2 | Pending |
 | PORT-02 | Phase 2 | Pending |
 | PORT-03 | Phase 2 | Pending |
