@@ -88,6 +88,11 @@ Plans:
 
 **Requirements:** RPOOL-01, RPOOL-02, RPOOL-03
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 04-01-PLAN.md — Remove SSH branches from resource pool CRUD and verify tests
+
 **Success Criteria:**
 1. resource-pool_functions.go contains no SSH code paths (getPoolID, getPoolNAME, resourcePoolRead use govmomi only)
 2. Nested resource pool scenarios work correctly (path resolution via govmomi)
