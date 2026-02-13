@@ -18,6 +18,11 @@ Transform the provider from dual-path (SSH + govmomi) to govmomi-first by fixing
 
 **Requirements:** BUILD-01, BUILD-02, BUILD-03
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 01-01-PLAN.md — Fix type mismatches and implement missing govmomi function
+
 **Success Criteria:**
 1. `go build ./...` succeeds without compilation errors
 2. `esxi_host` data source implements govmomi read function (dataSourceEsxiHostReadGovmomi exists)
@@ -127,7 +132,7 @@ Transform the provider from dual-path (SSH + govmomi) to govmomi-first by fixing
 
 | Phase | Status | Requirements | Completion |
 |-------|--------|--------------|------------|
-| 1 - Fix Build | Pending | BUILD-01, BUILD-02, BUILD-03 | 0% |
+| 1 - Fix Build | Planning Complete | BUILD-01, BUILD-02, BUILD-03 | 0% |
 | 2 - Portgroup SSH Removal | Pending | PORT-01, PORT-02, PORT-03, PORT-04 | 0% |
 | 3 - vSwitch SSH Removal | Pending | VSW-01, VSW-02, VSW-03, VSW-04 | 0% |
 | 4 - Resource Pool SSH Removal | Pending | RPOOL-01, RPOOL-02, RPOOL-03 | 0% |
