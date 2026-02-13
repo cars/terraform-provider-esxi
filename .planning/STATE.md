@@ -15,19 +15,19 @@
 
 ## Current Position
 
-**Phase:** 3 - vSwitch SSH Removal
+**Phase:** 4 - Resource Pool SSH Removal
 **Plan:** 01 (Completed)
 **Status:** Complete
 **Progress:** [██████████] 100%
 
 **Active Work:**
-- Phase 3 Plan 1 completed successfully
-- All vswitch SSH code removed
-- 4 files modified (functions, create, delete, import)
+- Phase 4 Plan 1 completed successfully
+- All resource pool SSH code removed
+- 4 files modified (functions, create, update, delete)
 - Test baseline maintained (27/32 passing)
 
 **Next Action:**
-- Proceed to Phase 4 (Resource Pool SSH Removal)
+- Proceed to Phase 5 (Virtual Disk SSH Removal)
 
 ---
 
@@ -40,11 +40,11 @@
 | 1 - Fix Build | 3 | 3 | 4/4 | Complete |
 | 2 - Portgroup SSH Removal | 4 | 4 | 4/4 | Complete |
 | 3 - vSwitch SSH Removal | 4 | 4 | 5/5 | Complete |
-| 4 - Resource Pool SSH Removal | 3 | 0 | 0/4 | Pending |
+| 4 - Resource Pool SSH Removal | 3 | 3 | 4/4 | Complete |
 | 5 - Virtual Disk SSH Removal | 4 | 0 | 0/6 | Pending |
 | 6 - Infrastructure Cleanup | 4 | 0 | 0/6 | Pending |
 
-**Overall:** 11/22 requirements completed (50%)
+**Overall:** 14/22 requirements completed (64%)
 
 ### Execution History
 
@@ -53,12 +53,13 @@
 | 01-fix-build-errors | 01 | 206 | 3 | 4 | 2026-02-13 |
 | 02-remove-ssh-from-portgroup | 01 | 131 | 2 | 5 | 2026-02-13 |
 | 03-remove-ssh-from-vswitch | 01 | 181 | 2 | 4 | 2026-02-13 |
+| 04-remove-ssh-from-resource-pool | 01 | 174 | 2 | 4 | 2026-02-13 |
 
 ### Velocity
 
-- Plans completed: 3
+- Plans completed: 4
 - Plans in progress: 0
-- Average requirements per phase: 3.7
+- Average requirements per phase: 3.5
 - Average duration per plan: 173s (2.9 minutes)
 
 ---
@@ -79,6 +80,9 @@
 | Keep _govmomi function names during SSH removal | 02-remove-ssh-from-portgroup | 2026-02-13 | Phase 6 will handle all renaming globally for consistency | Cleaner migration path with single rename phase |
 | Keep useGovmomi flag during SSH removal | 02-remove-ssh-from-portgroup | 2026-02-13 | Phase 6 will remove flag globally after all SSH removal complete | Maintains config consistency across phases |
 | Wrapper function pattern for SSH removal | 02-remove-ssh-from-portgroup | 2026-02-13 | Thin wrappers calling _govmomi implementations allow callers to remain unchanged | Data source and resource read functions work without modification |
+| Keep wrapper function pattern established in Phase 2/3 | 04-remove-ssh-from-resource-pool | 2026-02-13 | Proven pattern from portgroup/vswitch provides consistency and automatic data source fixes | Resource pool data source works without modification |
+| Preserve resource-pool_import.go unchanged | 04-remove-ssh-from-resource-pool | 2026-02-13 | Import already uses getPoolNAME shared function; wrapper pattern auto-fixes routing | No changes needed to import implementation |
+| Defer _govmomi function renaming to Phase 6 | 04-remove-ssh-from-resource-pool | 2026-02-13 | Maintains consistency with Phase 2/3 approach | Single global rename in Phase 6 after all SSH removal |
 
 ### Open Questions
 
@@ -97,8 +101,8 @@
 - [x] Execute Phase 2 plan - Completed 2026-02-13
 - [x] Plan Phase 3 (vSwitch SSH Removal) - Completed 2026-02-13
 - [x] Execute Phase 3 plan - Completed 2026-02-13
-- [ ] Plan Phase 4 (Resource Pool SSH Removal)
-- [ ] Execute Phase 4 plan
+- [x] Plan Phase 4 (Resource Pool SSH Removal) - Completed 2026-02-13
+- [x] Execute Phase 4 plan - Completed 2026-02-13
 
 ### Blockers
 
@@ -111,23 +115,32 @@ None currently.
 ### For Next Session
 
 **Context to preserve:**
-- Phase 3 complete: vSwitch resource is SSH-free, operates entirely via govmomi
-- 11 requirements completed (50% overall progress)
-- SSH removal pattern proven across two network resources (portgroup, vswitch)
+- Phase 4 complete: Resource pool resource is SSH-free, operates entirely via govmomi
+- 14 requirements completed (64% overall progress)
+- SSH removal pattern proven across three resources (portgroup, vswitch, resource pool)
 - 27/32 tests passing (5 pre-existing simulator limitations)
 - Data source auto-fixed by wrapper function pattern (no changes needed)
 
 **Files to review:**
-- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/phases/03-remove-ssh-from-vswitch/03-01-SUMMARY.md` (Phase 3 results)
+- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/phases/04-remove-ssh-from-resource-pool/04-01-SUMMARY.md` (Phase 4 results)
 - `/home/cars/src/github/cars/terraform-provider-esxi/.planning/ROADMAP.md` (remaining phases)
-- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/REQUIREMENTS.md` (Phase 4 requirements)
+- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/REQUIREMENTS.md` (Phase 5 requirements)
 
 **Expected next command:**
 ```bash
-/gsd:plan-phase 4
+/gsd:plan-phase 5
 ```
 
 ### Recent Activity
+
+**2026-02-13 (Phase 4):**
+- Phase 4 Plan 1 executed and completed (174 seconds)
+- Removed all SSH branches from resource pool CRUD functions
+- Replaced getPoolID, getPoolNAME, resourcePoolRead with thin wrappers calling govmomi
+- Removed SSH conditionals from create, update, delete operations
+- Cleaned up imports (bufio, regexp from functions.go; strconv from create.go)
+- Test baseline maintained (27/32 passing)
+- SUMMARY.md created, STATE.md updated
 
 **2026-02-13 (Phase 3):**
 - Phase 3 Plan 1 executed and completed (181 seconds)
@@ -178,5 +191,5 @@ None currently.
 ---
 
 *State initialized: 2026-02-12*
-*Last execution: 2026-02-13 (Phase 3 Plan 1 complete)*
-*Ready for Phase 4 planning*
+*Last execution: 2026-02-13 (Phase 4 Plan 1 complete)*
+*Ready for Phase 5 planning*
