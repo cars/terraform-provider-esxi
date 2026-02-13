@@ -111,8 +111,8 @@ func findVirtualDiskInDir(c *Config, diskStore, dir string) (string, error) {
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[findVirtualDiskInDir]")
 
-	remote_cmd := fmt.Sprintf("ls \"%s/vmfs/volumes/%s/%s\"/*.vmdk 2>/dev/null | head -1", 
-		getDatastorePath(c), diskStore, dir)
+	remote_cmd := fmt.Sprintf("ls \"/vmfs/volumes/%s/%s\"/*.vmdk 2>/dev/null | head -1",
+		diskStore, dir)
 	
 	stdout, err := runRemoteSshCommand(esxiConnInfo, remote_cmd, "find virtual disk")
 	if err != nil {
@@ -132,4 +132,11 @@ func findVirtualDiskInDir(c *Config, diskStore, dir string) (string, error) {
 	}
 
 	return filename, nil
+}
+
+// findVirtualDiskInDir_govmomi searches for .vmdk files using govmomi API
+func findVirtualDiskInDir_govmomi(c *Config, diskStore, dir string) (string, error) {
+	// TODO: Implement govmomi-based directory listing for virtual disks
+	// This requires using the datastore browser API to enumerate .vmdk files
+	return "", fmt.Errorf("findVirtualDiskInDir_govmomi not yet implemented - use SSH mode or specify virtual_disk_name explicitly")
 }

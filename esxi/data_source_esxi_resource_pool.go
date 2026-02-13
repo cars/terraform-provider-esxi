@@ -77,7 +77,7 @@ func dataSourceResourcePoolRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	// Read resource pool configuration
-	cpuMin, cpuMinExpandable, cpuMax, cpuShares, memMin, memMinExpandable, memMax, memShares, err := resourcePoolRead(c, poolID)
+	_, cpuMin, cpuMinExpandable, cpuMax, cpuShares, memMin, memMinExpandable, memMax, memShares, err := resourcePoolRead(c, poolID)
 	if err != nil {
 		return fmt.Errorf("Failed to read resource pool '%s': %s", name, err)
 	}
