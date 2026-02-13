@@ -3,7 +3,6 @@ package esxi
 import (
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -11,10 +10,8 @@ import (
 
 func resourceRESOURCEPOOLCreate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Config)
-	esxiConnInfo := getConnectionInfo(c)
 	log.Println("[resourceRESOURCEPOOLCreate]")
 
-	var remote_cmd string
 	var pool_id, parent_pool string
 	var err error
 
@@ -49,82 +46,11 @@ func resourceRESOURCEPOOLCreate(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 
-	cpu_min_opt := "--cpu-min=0"
-	if cpu_min > 0 {
-		cpu_min_opt = fmt.Sprintf("--cpu-min=%d", cpu_min)
-	}
-
-	cpu_min_expandable_opt := "--cpu-min-expandable=true"
-	if cpu_min_expandable == "false" {
-		cpu_min_expandable_opt = "--cpu-min-expandable=false"
-	}
-
-	cpu_max_opt := ""
-	if cpu_max > 0 {
-		cpu_max_opt = fmt.Sprintf("--cpu-max=%d", cpu_max)
-	}
-
-	cpu_shares_opt := "--cpu-shares=normal"
-	if cpu_shares == "low" || cpu_shares == "high" {
-		cpu_shares_opt = fmt.Sprintf("--cpu-shares=%s", cpu_shares)
-	} else {
-		tmp_var, err := strconv.Atoi(cpu_shares)
-		if err == nil {
-			cpu_shares_opt = fmt.Sprintf("--cpu-shares=%d", tmp_var)
-		}
-	}
-
-	mem_min_opt := "--mem-min=0"
-	if mem_min > 0 {
-		mem_min_opt = fmt.Sprintf("--mem-min=%d", mem_min)
-	}
-
-	mem_min_expandable_opt := "--mem-min-expandable=true"
-	if mem_min_expandable == "false" {
-		mem_min_expandable_opt = "--mem-min-expandable=false"
-	}
-
-	mem_max_opt := ""
-	if mem_max > 0 {
-		mem_max_opt = fmt.Sprintf("--mem-max=%d", mem_max)
-	}
-
-	mem_shares_opt := "--mem-shares=normal"
-	if mem_shares == "low" || mem_shares == "high" {
-		mem_shares_opt = fmt.Sprintf("--mem-shares=%s", mem_shares)
-	} else {
-		tmp_var, err := strconv.Atoi(mem_shares)
-		if err == nil {
-			mem_shares_opt = fmt.Sprintf("--mem-shares=%d", tmp_var)
-		}
-	}
-
-	if c.useGovmomi {
-		// Use govmomi to create resource pool
-		pool_id, err = resourcePoolCreate_govmomi(c, resource_pool_name, cpu_min, cpu_min_expandable,
-			cpu_max, cpu_shares, mem_min, mem_min_expandable, mem_max, mem_shares, parent_pool)
-		if err != nil {
-			d.SetId("")
-			return fmt.Errorf("Failed to create pool: %s\n", err)
-		}
-	} else {
-		// Fallback to SSH
-		parent_pool_id, err := getPoolID(c, parent_pool)
-		if err != nil {
-			d.SetId("")
-			return fmt.Errorf("Failed to get pool id: %s\n", err)
-		}
-
-		remote_cmd = fmt.Sprintf("vim-cmd hostsvc/rsrc/create %s %s %s %s %s %s %s %s %s %s",
-			cpu_min_opt, cpu_min_expandable_opt, cpu_max_opt, cpu_shares_opt,
-			mem_min_opt, mem_min_expandable_opt, mem_max_opt, mem_shares_opt, parent_pool_id, resource_pool_name)
-
-		_, err = runRemoteSshCommand(esxiConnInfo, remote_cmd, "create resource pool")
-		pool_id, _ = getPoolID(c, resource_pool_name)
-		if err != nil {
-			d.SetId("")
-			return fmt.Errorf("Failed to get pool id: %s\n", err)
-		}
+	pool_id, err = resourcePoolCreate_govmomi(c, resource_pool_name, cpu_min, cpu_min_expandable,
+		cpu_max, cpu_shares, mem_min, mem_min_expandable, mem_max, mem_shares, parent_pool)
+	if err != nil {
+		d.SetId("")
+		return fmt.Errorf("Failed to create pool: %s\n", err)
 	}
 
 	//  Set pool_id
