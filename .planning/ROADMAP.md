@@ -64,6 +64,11 @@ Plans:
 
 **Requirements:** VSW-01, VSW-02, VSW-03, VSW-04
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 03-01-PLAN.md — Remove SSH branches from vSwitch CRUD and rewrite import
+
 **Success Criteria:**
 1. vswitch_functions.go contains no SSH code paths (vswitchUpdate, vswitchRead use govmomi only)
 2. vswitch_import.go successfully imports vswitches using govmomi
