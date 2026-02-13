@@ -41,6 +41,11 @@ Plans:
 
 **Requirements:** PORT-01, PORT-02, PORT-03, PORT-04
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 02-01-PLAN.md — Remove SSH branches from portgroup CRUD and rewrite import
+
 **Success Criteria:**
 1. portgroup_functions.go contains no SSH code paths (portgroupCreate, portgroupRead, portgroupSecurityPolicyRead use govmomi only)
 2. portgroup_import.go successfully imports portgroups using govmomi
@@ -178,4 +183,4 @@ Research flags carried forward:
 
 ---
 
-*Last updated: 2026-02-12*
+*Last updated: 2026-02-13*
