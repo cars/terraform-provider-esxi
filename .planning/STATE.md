@@ -16,19 +16,20 @@
 ## Current Position
 
 **Phase:** 6 - Infrastructure Cleanup
-**Plan:** 01 (Completed)
-**Status:** Complete
-**Progress:** [█████████░] 86%
+**Plan:** 02 (Completed)
+**Status:** In Progress
+**Progress:** [█████████░] 91%
 
 **Active Work:**
-- Phase 6 Plan 1 completed successfully
-- useGovmomi feature flag completely removed
-- 12 files modified (config, 4 source files, 7 test files)
-- Zero useGovmomi references remain in codebase
+- Phase 6 Plan 2 completed successfully
+- All _govmomi function suffixes removed from codebase
+- 23 files modified (18 source files, 5 test files)
+- 620 lines of dead code removed (orphaned functions + wrappers)
+- Zero _govmomi references remain in function definitions or calls
 - Test baseline maintained (27/32 passing)
 
 **Next Action:**
-- Proceed to Phase 6 Plan 2 (Function renaming)
+- Proceed to Phase 6 Plan 3 (SSH infrastructure cleanup) or final verification
 
 ---
 
@@ -43,9 +44,9 @@
 | 3 - vSwitch SSH Removal | 4 | 4 | 5/5 | Complete |
 | 4 - Resource Pool SSH Removal | 3 | 3 | 4/4 | Complete |
 | 5 - Virtual Disk SSH Removal | 4 | 4 | 6/6 | Complete |
-| 6 - Infrastructure Cleanup | 4 | 1 | 2/6 | In Progress |
+| 6 - Infrastructure Cleanup | 4 | 2 | 4/6 | In Progress |
 
-**Overall:** 19/22 requirements completed (86%)
+**Overall:** 20/22 requirements completed (91%)
 
 ### Execution History
 
@@ -57,6 +58,7 @@
 | 04-remove-ssh-from-resource-pool | 01 | 174 | 2 | 4 | 2026-02-13 |
 | 05-remove-ssh-from-virtual-disk | 01 | 219 | 2 | 3 | 2026-02-14 |
 | 06-infrastructure-cleanup | 01 | 217 | 2 | 12 | 2026-02-14 |
+| 06-infrastructure-cleanup | 02 | 654 | 2 | 23 | 2026-02-14 |
 
 ### Velocity
 
@@ -91,6 +93,8 @@
 | Keep strconv import in virtual-disk_functions.go | 05-remove-ssh-from-virtual-disk | 2026-02-14 | growVirtualDisk_govmomi still uses strconv.Atoi for size conversion | Import required by govmomi implementation |
 | Remove useGovmomi field entirely | 06-infrastructure-cleanup | 2026-02-14 | No more dual-path code after Phases 2-5 completion | Simpler Config struct, no feature flag checks, zero conditionals in codebase |
 | Keep dataSourceEsxiHostReadSSH function unused | 06-infrastructure-cleanup | 2026-02-14 | Go allows unused non-exported functions; removal would require removing all its SSH helpers | No compilation errors, dead code can be cleaned in future |
+| Delete orphaned guest _govmomi functions | 06-infrastructure-cleanup | 2026-02-14 | After Plan 01 removed useGovmomi conditionals, 7 guest _govmomi functions have no external callers | 406 lines of dead code removed (guestREAD_govmomi + power/VMID functions) |
+| Inline all wrapper functions | 06-infrastructure-cleanup | 2026-02-14 | Wrappers no longer serve purpose after useGovmomi removal | Simpler call paths, no indirection, 214 wrapper lines removed |
 
 ### Open Questions
 
@@ -125,24 +129,35 @@ None currently.
 ### For Next Session
 
 **Context to preserve:**
-- Phase 6 Plan 1 complete: useGovmomi feature flag completely removed from codebase
-- 19 requirements completed (86% overall progress)
-- Zero useGovmomi references remain anywhere
-- Guest operations use SSH directly, data sources use govmomi directly
+- Phase 6 Plan 2 complete: All _govmomi function suffixes removed from codebase
+- 20 requirements completed (91% overall progress)
+- Zero _govmomi references remain in function definitions or calls
+- 620 lines of dead code removed (orphaned functions + wrappers)
+- Clean function names without migration artifacts
 - 27/32 tests passing (5 pre-existing simulator limitations)
-- 3 more plans remaining in Phase 6 (function renaming, SSH cleanup, final verification)
+- 2 more plans remaining in Phase 6 (SSH cleanup, final verification)
 
 **Files to review:**
-- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/phases/06-infrastructure-cleanup/06-01-SUMMARY.md` (Phase 6 Plan 1 results)
+- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/phases/06-infrastructure-cleanup/06-02-SUMMARY.md` (Phase 6 Plan 2 results)
 - `/home/cars/src/github/cars/terraform-provider-esxi/.planning/ROADMAP.md` (remaining Phase 6 plans)
 - `/home/cars/src/github/cars/terraform-provider-esxi/.planning/REQUIREMENTS.md` (Phase 6 requirements)
 
 **Expected next command:**
 ```bash
-/gsd:execute-phase 6 --plan 2
+/gsd:execute-phase 6 --plan 3
 ```
 
 ### Recent Activity
+
+**2026-02-14 (Phase 6 Plan 2):**
+- Phase 6 Plan 2 executed and completed (654 seconds)
+- Renamed all _govmomi functions to canonical names across 4 resources
+- Deleted 7 orphaned guest _govmomi functions (406 lines)
+- Removed 10 wrapper functions (214 lines)
+- Updated 23 files (18 source, 5 test)
+- Zero _govmomi references remain in codebase
+- Test baseline maintained (27/32 passing)
+- SUMMARY.md created, STATE.md updated
 
 **2026-02-14 (Phase 6 Plan 1):**
 - Phase 6 Plan 1 executed and completed (217 seconds)
@@ -225,5 +240,5 @@ None currently.
 ---
 
 *State initialized: 2026-02-12*
-*Last execution: 2026-02-14 (Phase 6 Plan 1 complete)*
-*Ready for Phase 6 Plan 2 execution*
+*Last execution: 2026-02-14 (Phase 6 Plan 2 complete)*
+*Ready for Phase 6 Plan 3 execution*
