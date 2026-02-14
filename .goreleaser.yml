@@ -49,6 +49,8 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 release:
+  extra_files:
+    - glob: ./terraform-registry-manifest.json
   # If you want to manually examine the release before its live, uncomment this line:
   # draft: true
 changelog:
