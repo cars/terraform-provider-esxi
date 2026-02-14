@@ -3,10 +3,10 @@ package esxi
 import (
 	"fmt"
 	"log"
-	"path/filepath"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 func dataSourceVirtualDisk() *schema.Resource {
@@ -102,41 +102,71 @@ func dataSourceVirtualDiskRead(d *schema.ResourceData, m interface{}) error {
 
 // findVirtualDiskInDir searches for .vmdk files in the specified directory
 func findVirtualDiskInDir(c *Config, diskStore, dir string) (string, error) {
-	// Use govmomi if enabled
-	if c.useGovmomi {
-		return findVirtualDiskInDir_govmomi(c, diskStore, dir)
-	}
-
-	// Fallback to SSH
-	esxiConnInfo := getConnectionInfo(c)
-	log.Printf("[findVirtualDiskInDir]")
-
-	remote_cmd := fmt.Sprintf("ls \"/vmfs/volumes/%s/%s\"/*.vmdk 2>/dev/null | head -1",
-		diskStore, dir)
-	
-	stdout, err := runRemoteSshCommand(esxiConnInfo, remote_cmd, "find virtual disk")
-	if err != nil {
-		return "", err
-	}
-
-	if stdout == "" {
-		return "", nil
-	}
-
-	// Extract just the filename from the full path
-	filename := filepath.Base(strings.TrimSpace(stdout))
-	
-	// Remove -flat.vmdk suffix if present, return the descriptor .vmdk
-	if strings.HasSuffix(filename, "-flat.vmdk") {
-		filename = strings.Replace(filename, "-flat.vmdk", ".vmdk", 1)
-	}
-
-	return filename, nil
+	return findVirtualDiskInDir_govmomi(c, diskStore, dir)
 }
 
 // findVirtualDiskInDir_govmomi searches for .vmdk files using govmomi API
 func findVirtualDiskInDir_govmomi(c *Config, diskStore, dir string) (string, error) {
-	// TODO: Implement govmomi-based directory listing for virtual disks
-	// This requires using the datastore browser API to enumerate .vmdk files
-	return "", fmt.Errorf("findVirtualDiskInDir_govmomi not yet implemented - use SSH mode or specify virtual_disk_name explicitly")
+	log.Printf("[findVirtualDiskInDir_govmomi]")
+
+	gc, err := c.GetGovmomiClient()
+	if err != nil {
+		return "", fmt.Errorf("failed to get govmomi client: %w", err)
+	}
+
+	ds, err := getDatastoreByName(gc.Context(), gc.Finder, diskStore)
+	if err != nil {
+		return "", fmt.Errorf("failed to get datastore: %w", err)
+	}
+
+	// Get datastore browser
+	browser, err := ds.Browser(gc.Context())
+	if err != nil {
+		return "", fmt.Errorf("failed to get datastore browser: %w", err)
+	}
+
+	// Create search spec for .vmdk files
+	spec := types.HostDatastoreBrowserSearchSpec{
+		MatchPattern: []string{"*.vmdk"},
+		Details: &types.FileQueryFlags{
+			FileSize: false,
+		},
+	}
+
+	// Search the directory
+	searchPath := ds.Path(dir)
+	task, err := browser.SearchDatastore(gc.Context(), searchPath, &spec)
+	if err != nil {
+		return "", fmt.Errorf("failed to search datastore: %w", err)
+	}
+
+	info, err := task.WaitForResult(gc.Context())
+	if err != nil {
+		return "", fmt.Errorf("failed to get search results: %w", err)
+	}
+
+	result, ok := info.Result.(types.HostDatastoreBrowserSearchResults)
+	if !ok {
+		return "", fmt.Errorf("unexpected search result type")
+	}
+
+	// Iterate through files, skip -flat.vmdk files, return first descriptor .vmdk
+	for _, file := range result.File {
+		if fileInfo, ok := file.(*types.FileInfo); ok {
+			filename := fileInfo.Path
+			// Skip -flat.vmdk files
+			if strings.HasSuffix(filename, "-flat.vmdk") {
+				continue
+			}
+			// Return first descriptor .vmdk file
+			if strings.HasSuffix(filename, ".vmdk") {
+				log.Printf("[findVirtualDiskInDir_govmomi] Found virtual disk: %s\n", filename)
+				return filename, nil
+			}
+		}
+	}
+
+	// No vmdk found - return empty string (not error)
+	log.Printf("[findVirtualDiskInDir_govmomi] No virtual disk found in directory\n")
+	return "", nil
 }
