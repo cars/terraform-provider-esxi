@@ -87,12 +87,6 @@ func resourceGUESTRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func guestREAD(c *Config, vmid string, guest_startup_timeout int) (string, string, string, string, string, string, string, string, string, string, [10][3]string, string, [60][2]string, string, string, map[string]interface{}, error) {
-	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestREAD_govmomi(c, vmid, guest_startup_timeout)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Println("[guestREAD]")
 

@@ -114,13 +114,7 @@ func dataSourceEsxiHostRead(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Config)
 	log.Println("[dataSourceEsxiHostRead]")
 
-	// Use govmomi if enabled for better host information
-	if c.useGovmomi {
-		return dataSourceEsxiHostReadGovmomi(d, c)
-	}
-
-	// Fallback to SSH
-	return dataSourceEsxiHostReadSSH(d, c)
+	return dataSourceEsxiHostReadGovmomi(d, c)
 }
 
 func dataSourceEsxiHostReadSSH(d *schema.ResourceData, c *Config) error {

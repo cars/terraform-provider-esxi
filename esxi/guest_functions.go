@@ -10,12 +10,6 @@ import (
 )
 
 func guestGetVMID(c *Config, guest_name string) (string, error) {
-	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestGetVMID_govmomi(c, guest_name)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[guestGetVMID]\n")
 
@@ -36,12 +30,6 @@ func guestGetVMID(c *Config, guest_name string) (string, error) {
 }
 
 func guestValidateVMID(c *Config, vmid string) (string, error) {
-	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestValidateVMID_govmomi(c, vmid)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[guestValidateVMID]\n")
 
@@ -404,11 +392,6 @@ func guestReload(c *Config, vmid string) error {
 
 func guestPowerOn(c *Config, vmid string) (string, error) {
 	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestPowerOn_govmomi(c, vmid)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[guestPowerOn]\n")
 
@@ -428,12 +411,6 @@ func guestPowerOn(c *Config, vmid string) (string, error) {
 }
 
 func guestPowerOff(c *Config, vmid string, guest_shutdown_timeout int) (string, error) {
-	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestPowerOff_govmomi(c, vmid, guest_shutdown_timeout)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[guestPowerOff]\n")
 
@@ -472,12 +449,6 @@ func guestPowerOff(c *Config, vmid string, guest_shutdown_timeout int) (string, 
 }
 
 func guestPowerGetState(c *Config, vmid string) string {
-	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestPowerGetState_govmomi(c, vmid)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[guestPowerGetState]\n")
 
@@ -499,12 +470,6 @@ func guestPowerGetState(c *Config, vmid string) string {
 }
 
 func guestGetIpAddress(c *Config, vmid string, guest_startup_timeout int) string {
-	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestGetIpAddress_govmomi(c, vmid, guest_startup_timeout)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[guestGetIpAddress]\n")
 
