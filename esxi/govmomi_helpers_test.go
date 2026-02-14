@@ -24,7 +24,6 @@ func TestGetHostSystem(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	client, err := config.GetGovmomiClient()
@@ -68,7 +67,6 @@ func TestGetDatastoreByName(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	client, err := config.GetGovmomiClient()
@@ -117,7 +115,6 @@ func TestIsDatastoreAccessible(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	client, err := config.GetGovmomiClient()
@@ -163,7 +160,6 @@ func TestGetHostNetworkSystem(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	client, err := config.GetGovmomiClient()
@@ -207,7 +203,6 @@ func TestGetRootResourcePool(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	client, err := config.GetGovmomiClient()
@@ -251,7 +246,6 @@ func TestWaitForTask(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	client, err := config.GetGovmomiClient()

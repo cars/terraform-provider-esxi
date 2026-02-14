@@ -24,7 +24,6 @@ func TestPortgroupCreateReadDeleteGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()
@@ -97,7 +96,6 @@ func TestPortgroupUpdateGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()
@@ -192,7 +190,6 @@ func TestPortgroupSecurityPolicyReadGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()
@@ -250,7 +247,6 @@ func TestPortgroupNonExistentGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()

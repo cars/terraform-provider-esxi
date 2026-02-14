@@ -24,7 +24,6 @@ func TestResourcePoolCreateReadDeleteGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()
@@ -118,7 +117,6 @@ func TestResourcePoolUpdateGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()
@@ -214,7 +212,6 @@ func TestGetPoolIDAndNameGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()

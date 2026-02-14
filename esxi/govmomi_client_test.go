@@ -315,7 +315,6 @@ func TestConfigGetGovmomiClient(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	// First call should create client

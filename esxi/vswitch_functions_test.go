@@ -24,7 +24,6 @@ func TestVswitchCreateReadDeleteGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()
@@ -102,7 +101,6 @@ func TestVswitchUpdateGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()

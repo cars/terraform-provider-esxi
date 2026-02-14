@@ -24,7 +24,6 @@ func TestDiskStoreValidateGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	// Get datastore name
@@ -72,7 +71,6 @@ func TestVirtualDiskCreateReadGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	client, err := config.GetGovmomiClient()
