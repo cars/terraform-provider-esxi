@@ -15,19 +15,20 @@
 
 ## Current Position
 
-**Phase:** 4 - Resource Pool SSH Removal
+**Phase:** 5 - Virtual Disk SSH Removal
 **Plan:** 01 (Completed)
 **Status:** Complete
 **Progress:** [██████████] 100%
 
 **Active Work:**
-- Phase 4 Plan 1 completed successfully
-- All resource pool SSH code removed
-- 4 files modified (functions, create, update, delete)
+- Phase 5 Plan 1 completed successfully
+- All virtual disk SSH code removed
+- 3 files modified (functions, delete, data source)
+- virtualDiskDelete_govmomi and findVirtualDiskInDir_govmomi implemented
 - Test baseline maintained (27/32 passing)
 
 **Next Action:**
-- Proceed to Phase 5 (Virtual Disk SSH Removal)
+- Proceed to Phase 6 (Infrastructure Cleanup)
 
 ---
 
@@ -41,10 +42,10 @@
 | 2 - Portgroup SSH Removal | 4 | 4 | 4/4 | Complete |
 | 3 - vSwitch SSH Removal | 4 | 4 | 5/5 | Complete |
 | 4 - Resource Pool SSH Removal | 3 | 3 | 4/4 | Complete |
-| 5 - Virtual Disk SSH Removal | 4 | 0 | 0/6 | Pending |
+| 5 - Virtual Disk SSH Removal | 4 | 4 | 6/6 | Complete |
 | 6 - Infrastructure Cleanup | 4 | 0 | 0/6 | Pending |
 
-**Overall:** 14/22 requirements completed (64%)
+**Overall:** 18/22 requirements completed (82%)
 
 ### Execution History
 
@@ -54,13 +55,14 @@
 | 02-remove-ssh-from-portgroup | 01 | 131 | 2 | 5 | 2026-02-13 |
 | 03-remove-ssh-from-vswitch | 01 | 181 | 2 | 4 | 2026-02-13 |
 | 04-remove-ssh-from-resource-pool | 01 | 174 | 2 | 4 | 2026-02-13 |
+| 05-remove-ssh-from-virtual-disk | 01 | 219 | 2 | 3 | 2026-02-14 |
 
 ### Velocity
 
-- Plans completed: 4
+- Plans completed: 5
 - Plans in progress: 0
-- Average requirements per phase: 3.5
-- Average duration per plan: 173s (2.9 minutes)
+- Average requirements per phase: 3.6
+- Average duration per plan: 182s (3.0 minutes)
 
 ---
 
@@ -83,13 +85,16 @@
 | Keep wrapper function pattern established in Phase 2/3 | 04-remove-ssh-from-resource-pool | 2026-02-13 | Proven pattern from portgroup/vswitch provides consistency and automatic data source fixes | Resource pool data source works without modification |
 | Preserve resource-pool_import.go unchanged | 04-remove-ssh-from-resource-pool | 2026-02-13 | Import already uses getPoolNAME shared function; wrapper pattern auto-fixes routing | No changes needed to import implementation |
 | Defer _govmomi function renaming to Phase 6 | 04-remove-ssh-from-resource-pool | 2026-02-13 | Maintains consistency with Phase 2/3 approach | Single global rename in Phase 6 after all SSH removal |
+| Implement idempotent delete in virtualDiskDelete_govmomi | 05-remove-ssh-from-virtual-disk | 2026-02-14 | DeleteVirtualDisk may encounter "not found" errors; return success for idempotent behavior | Matches SSH version behavior; safe for multiple delete attempts |
+| Skip -flat.vmdk files in datastore browser | 05-remove-ssh-from-virtual-disk | 2026-02-14 | Descriptor .vmdk is primary file; -flat.vmdk is storage backing | findVirtualDiskInDir_govmomi returns descriptor only |
+| Keep strconv import in virtual-disk_functions.go | 05-remove-ssh-from-virtual-disk | 2026-02-14 | growVirtualDisk_govmomi still uses strconv.Atoi for size conversion | Import required by govmomi implementation |
 
 ### Open Questions
 
 | Question | Phase | Impact | Status |
 |----------|-------|--------|--------|
 | esxi_host data source: implement govmomi or keep SSH? | Phase 1 | Blocking for build fix decision | **RESOLVED** - Implemented full govmomi reader |
-| Does virtualDiskDelete_govmomi exist? | Phase 5 | Determines if Phase 5 needs implementation vs just removal | Open (verify during Phase 5 planning) |
+| Does virtualDiskDelete_govmomi exist? | Phase 5 | Determines if Phase 5 needs implementation vs just removal | **RESOLVED** - Did not exist; implemented in Phase 5 Plan 1 |
 | Do SSH-created resources import correctly via govmomi? | Phases 2-3 | State migration compatibility for existing users | Open (test during Phase 2-3 execution) |
 
 ### Todos
@@ -103,6 +108,8 @@
 - [x] Execute Phase 3 plan - Completed 2026-02-13
 - [x] Plan Phase 4 (Resource Pool SSH Removal) - Completed 2026-02-13
 - [x] Execute Phase 4 plan - Completed 2026-02-13
+- [x] Plan Phase 5 (Virtual Disk SSH Removal) - Completed 2026-02-13
+- [x] Execute Phase 5 plan - Completed 2026-02-14
 
 ### Blockers
 
@@ -115,23 +122,35 @@ None currently.
 ### For Next Session
 
 **Context to preserve:**
-- Phase 4 complete: Resource pool resource is SSH-free, operates entirely via govmomi
-- 14 requirements completed (64% overall progress)
-- SSH removal pattern proven across three resources (portgroup, vswitch, resource pool)
+- Phase 5 complete: Virtual disk resource is SSH-free, operates entirely via govmomi
+- 18 requirements completed (82% overall progress)
+- SSH removal pattern proven across four resources (portgroup, vswitch, resource pool, virtual disk)
 - 27/32 tests passing (5 pre-existing simulator limitations)
-- Data source auto-fixed by wrapper function pattern (no changes needed)
+- virtualDiskDelete_govmomi and findVirtualDiskInDir_govmomi implemented
+- Only Phase 6 (Infrastructure Cleanup) remains
 
 **Files to review:**
-- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/phases/04-remove-ssh-from-resource-pool/04-01-SUMMARY.md` (Phase 4 results)
-- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/ROADMAP.md` (remaining phases)
-- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/REQUIREMENTS.md` (Phase 5 requirements)
+- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/phases/05-remove-ssh-from-virtual-disk/05-01-SUMMARY.md` (Phase 5 results)
+- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/ROADMAP.md` (final phase overview)
+- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/REQUIREMENTS.md` (Phase 6 requirements)
 
 **Expected next command:**
 ```bash
-/gsd:plan-phase 5
+/gsd:plan-phase 6
 ```
 
 ### Recent Activity
+
+**2026-02-14 (Phase 5):**
+- Phase 5 Plan 1 executed and completed (219 seconds)
+- Removed all SSH branches from virtual disk CRUD functions
+- Replaced diskStoreValidate, virtualDiskCREATE, virtualDiskREAD, growVirtualDisk with thin wrappers
+- Implemented virtualDiskDelete_govmomi using VirtualDiskManager.DeleteVirtualDisk API
+- Implemented findVirtualDiskInDir_govmomi using HostDatastoreBrowser.SearchDatastore API
+- Rewrote resourceVIRTUALDISKDelete to call govmomi (no SSH, no manual directory cleanup)
+- Cleaned up imports (removed errors from functions.go, removed path/filepath from data source)
+- Test baseline maintained (27/32 passing)
+- SUMMARY.md created, STATE.md updated
 
 **2026-02-13 (Phase 4):**
 - Phase 4 Plan 1 executed and completed (174 seconds)
@@ -191,5 +210,5 @@ None currently.
 ---
 
 *State initialized: 2026-02-12*
-*Last execution: 2026-02-13 (Phase 4 Plan 1 complete)*
-*Ready for Phase 5 planning*
+*Last execution: 2026-02-14 (Phase 5 Plan 1 complete)*
+*Ready for Phase 6 planning*
