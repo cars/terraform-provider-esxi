@@ -11,27 +11,13 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-//  Check if Pool exists (by name )and return it's Pool ID.
+// ============================================================================
+// Resource Pool Operations
+// ============================================================================
+
+// getPoolID gets resource pool ID by name using govmomi
 func getPoolID(c *Config, resource_pool_name string) (string, error) {
-	return getPoolID_govmomi(c, resource_pool_name)
-}
-
-//  Check if Pool exists (by id)and return it's Pool name.
-func getPoolNAME(c *Config, resource_pool_id string) (string, error) {
-	return getPoolNAME_govmomi(c, resource_pool_id)
-}
-
-func resourcePoolRead(c *Config, pool_id string) (string, int, string, int, string, int, string, int, string, error) {
-	return resourcePoolRead_govmomi(c, pool_id)
-}
-
-// ============================================================================
-// Govmomi-based Resource Pool Operations
-// ============================================================================
-
-// getPoolID_govmomi gets resource pool ID by name using govmomi
-func getPoolID_govmomi(c *Config, resource_pool_name string) (string, error) {
-	log.Printf("[getPoolID_govmomi] Getting pool ID for: %s\n", resource_pool_name)
+	log.Printf("[getPoolID] Getting pool ID for: %s\n", resource_pool_name)
 
 	if resource_pool_name == "/" || resource_pool_name == "Resources" {
 		return "ha-root-pool", nil
@@ -71,9 +57,9 @@ func getPoolID_govmomi(c *Config, resource_pool_name string) (string, error) {
 	return pool.Reference().Value, nil
 }
 
-// getPoolNAME_govmomi gets resource pool name by ID using govmomi
-func getPoolNAME_govmomi(c *Config, resource_pool_id string) (string, error) {
-	log.Printf("[getPoolNAME_govmomi] Getting pool name for ID: %s\n", resource_pool_id)
+// getPoolNAME gets resource pool name by ID using govmomi
+func getPoolNAME(c *Config, resource_pool_id string) (string, error) {
+	log.Printf("[getPoolNAME] Getting pool name for ID: %s\n", resource_pool_id)
 
 	if resource_pool_id == "ha-root-pool" {
 		return "/", nil
@@ -123,9 +109,9 @@ func getPoolNAME_govmomi(c *Config, resource_pool_id string) (string, error) {
 	return fullPath, nil
 }
 
-// resourcePoolRead_govmomi reads resource pool configuration using govmomi
-func resourcePoolRead_govmomi(c *Config, pool_id string) (string, int, string, int, string, int, string, int, string, error) {
-	log.Printf("[resourcePoolRead_govmomi] Reading pool ID: %s\n", pool_id)
+// resourcePoolRead reads resource pool configuration using govmomi
+func resourcePoolRead(c *Config, pool_id string) (string, int, string, int, string, int, string, int, string, error) {
+	log.Printf("[resourcePoolRead] Reading pool ID: %s\n", pool_id)
 
 	var cpu_min, cpu_max, mem_min, mem_max int
 	var cpu_shares, mem_shares string
@@ -195,21 +181,21 @@ func resourcePoolRead_govmomi(c *Config, pool_id string) (string, int, string, i
 	}
 
 	// Get pool name
-	resource_pool_name, err := getPoolNAME_govmomi(c, pool_id)
+	resource_pool_name, err := getPoolNAME(c, pool_id)
 	if err != nil {
 		return "", 0, "", 0, "", 0, "", 0, "", fmt.Errorf("failed to get pool name: %w", err)
 	}
 
-	log.Printf("[resourcePoolRead_govmomi] Successfully read pool: %s\n", resource_pool_name)
+	log.Printf("[resourcePoolRead] Successfully read pool: %s\n", resource_pool_name)
 	return resource_pool_name, cpu_min, cpu_min_expandable, cpu_max, cpu_shares,
 		mem_min, mem_min_expandable, mem_max, mem_shares, nil
 }
 
 // resourcePoolCreate_govmomi creates a resource pool using govmomi
-func resourcePoolCreate_govmomi(c *Config, resource_pool_name string, cpu_min int, cpu_min_expandable string,
+func resourcePoolCreate(c *Config, resource_pool_name string, cpu_min int, cpu_min_expandable string,
 	cpu_max int, cpu_shares string, mem_min int, mem_min_expandable string, mem_max int, mem_shares string,
 	parent_pool string) (string, error) {
-	log.Printf("[resourcePoolCreate_govmomi] Creating pool: %s\n", resource_pool_name)
+	log.Printf("[resourcePoolCreate] Creating pool: %s\n", resource_pool_name)
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {
@@ -252,10 +238,10 @@ func resourcePoolCreate_govmomi(c *Config, resource_pool_name string, cpu_min in
 }
 
 // resourcePoolUpdate_govmomi updates a resource pool using govmomi
-func resourcePoolUpdate_govmomi(c *Config, pool_id string, resource_pool_name string, cpu_min int,
+func resourcePoolUpdate(c *Config, pool_id string, resource_pool_name string, cpu_min int,
 	cpu_min_expandable string, cpu_max int, cpu_shares string, mem_min int, mem_min_expandable string,
 	mem_max int, mem_shares string) error {
-	log.Printf("[resourcePoolUpdate_govmomi] Updating pool ID: %s\n", pool_id)
+	log.Printf("[resourcePoolUpdate] Updating pool ID: %s\n", pool_id)
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {
@@ -270,7 +256,7 @@ func resourcePoolUpdate_govmomi(c *Config, pool_id string, resource_pool_name st
 	pool := object.NewResourcePool(gc.Client.Client, poolRef)
 
 	// Check if rename is needed
-	currentName, err := getPoolNAME_govmomi(c, pool_id)
+	currentName, err := getPoolNAME(c, pool_id)
 	if err != nil {
 		return fmt.Errorf("failed to get current pool name: %w", err)
 	}
@@ -309,8 +295,8 @@ func resourcePoolUpdate_govmomi(c *Config, pool_id string, resource_pool_name st
 }
 
 // resourcePoolDelete_govmomi deletes a resource pool using govmomi
-func resourcePoolDelete_govmomi(c *Config, pool_id string) error {
-	log.Printf("[resourcePoolDelete_govmomi] Deleting pool ID: %s\n", pool_id)
+func resourcePoolDelete(c *Config, pool_id string) error {
+	log.Printf("[resourcePoolDelete] Deleting pool ID: %s\n", pool_id)
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {

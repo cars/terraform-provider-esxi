@@ -41,13 +41,13 @@ func TestDiskStoreValidateGovmomi(t *testing.T) {
 	dsName := datastores[0].Name()
 
 	// Test validation
-	err = diskStoreValidate_govmomi(config, dsName)
+	err = diskStoreValidate(config, dsName)
 	if err != nil {
 		t.Fatalf("Datastore validation failed: %v", err)
 	}
 
 	// Test with invalid datastore
-	err = diskStoreValidate_govmomi(config, "nonexistent-datastore")
+	err = diskStoreValidate(config, "nonexistent-datastore")
 	if err == nil {
 		t.Fatal("Expected error for non-existent datastore")
 	}
@@ -94,7 +94,7 @@ func TestVirtualDiskCreateReadGovmomi(t *testing.T) {
 	diskType := "thin"
 
 	// Create virtual disk
-	virtdiskID, err := virtualDiskCREATE_govmomi(config, dsName, diskDir, diskName, diskSize, diskType)
+	virtdiskID, err := virtualDiskCREATE(config, dsName, diskDir, diskName, diskSize, diskType)
 	if err != nil {
 		t.Fatalf("Failed to create virtual disk: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestVirtualDiskCreateReadGovmomi(t *testing.T) {
 	}
 
 	// Read virtual disk
-	readDsName, readDir, readName, readSize, readType, err := virtualDiskREAD_govmomi(config, virtdiskID)
+	readDsName, readDir, readName, readSize, readType, err := virtualDiskREAD(config, virtdiskID)
 	if err != nil {
 		t.Fatalf("Failed to read virtual disk: %v", err)
 	}

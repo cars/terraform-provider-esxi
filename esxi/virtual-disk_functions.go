@@ -10,42 +10,13 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-//
-//  Validate Disk Store
-//
+// ============================================================================
+// Storage Operations
+// ============================================================================
+
+// diskStoreValidate validates datastore using govmomi
 func diskStoreValidate(c *Config, disk_store string) error {
-	return diskStoreValidate_govmomi(c, disk_store)
-}
-
-//
-//  Create virtual disk
-//
-func virtualDiskCREATE(c *Config, virtual_disk_disk_store string, virtual_disk_dir string,
-	virtual_disk_name string, virtual_disk_size int, virtual_disk_type string) (string, error) {
-	return virtualDiskCREATE_govmomi(c, virtual_disk_disk_store, virtual_disk_dir, virtual_disk_name, virtual_disk_size, virtual_disk_type)
-}
-
-//
-//  Grow virtual Disk
-//
-func growVirtualDisk(c *Config, virtdisk_id string, virtdisk_size string) (bool, error) {
-	return growVirtualDisk_govmomi(c, virtdisk_id, virtdisk_size)
-}
-
-//
-//  Read virtual Disk details
-//
-func virtualDiskREAD(c *Config, virtdisk_id string) (string, string, string, int, string, error) {
-	return virtualDiskREAD_govmomi(c, virtdisk_id)
-}
-
-// ============================================================================
-// Govmomi-based Storage Operations
-// ============================================================================
-
-// diskStoreValidate_govmomi validates datastore using govmomi
-func diskStoreValidate_govmomi(c *Config, disk_store string) error {
-	log.Printf("[diskStoreValidate_govmomi]\n")
+	log.Printf("[diskStoreValidate]\n")
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {
@@ -82,17 +53,17 @@ func diskStoreValidate_govmomi(c *Config, disk_store string) error {
 		return fmt.Errorf("disk store %s is not accessible", disk_store)
 	}
 
-	log.Printf("[diskStoreValidate_govmomi] Datastore %s is valid and accessible\n", disk_store)
+	log.Printf("[diskStoreValidate] Datastore %s is valid and accessible\n", disk_store)
 	return nil
 }
 
-// virtualDiskCREATE_govmomi creates a virtual disk using govmomi
-func virtualDiskCREATE_govmomi(c *Config, virtual_disk_disk_store string, virtual_disk_dir string,
+// virtualDiskCREATE creates a virtual disk using govmomi
+func virtualDiskCREATE(c *Config, virtual_disk_disk_store string, virtual_disk_dir string,
 	virtual_disk_name string, virtual_disk_size int, virtual_disk_type string) (string, error) {
-	log.Println("[virtualDiskCREATE_govmomi]")
+	log.Println("[virtualDiskCREATE]")
 
 	// Validate disk store exists
-	err := diskStoreValidate_govmomi(c, virtual_disk_disk_store)
+	err := diskStoreValidate(c, virtual_disk_disk_store)
 	if err != nil {
 		return "", fmt.Errorf("failed to validate disk store: %w", err)
 	}
@@ -156,8 +127,8 @@ func virtualDiskCREATE_govmomi(c *Config, virtual_disk_disk_store string, virtua
 }
 
 // virtualDiskREAD_govmomi reads virtual disk properties using govmomi
-func virtualDiskREAD_govmomi(c *Config, virtdisk_id string) (string, string, string, int, string, error) {
-	log.Println("[virtualDiskREAD_govmomi] Begin")
+func virtualDiskREAD(c *Config, virtdisk_id string) (string, string, string, int, string, error) {
+	log.Println("[virtualDiskREAD] Begin")
 
 	var virtual_disk_disk_store, virtual_disk_dir, virtual_disk_name string
 	var virtual_disk_type string
@@ -165,7 +136,7 @@ func virtualDiskREAD_govmomi(c *Config, virtdisk_id string) (string, string, str
 
 	// Split virtdisk_id into its variables
 	s := strings.Split(virtdisk_id, "/")
-	log.Printf("[virtualDiskREAD_govmomi] len=%d cap=%d %v\n", len(s), cap(s), s)
+	log.Printf("[virtualDiskREAD] len=%d cap=%d %v\n", len(s), cap(s), s)
 	if len(s) < 6 {
 		return "", "", "", 0, "", nil
 	} else if len(s) > 6 {
@@ -195,7 +166,7 @@ func virtualDiskREAD_govmomi(c *Config, virtdisk_id string) (string, string, str
 		return "", "", "", 0, "", fmt.Errorf("virtual disk not found: %w", err)
 	}
 
-	log.Printf("[virtualDiskREAD_govmomi] Found disk with UUID: %s\n", uuid)
+	log.Printf("[virtualDiskREAD] Found disk with UUID: %s\n", uuid)
 
 	// Get disk size from the -flat.vmdk file
 	// Parse the virtual disk name to construct the flat file name
@@ -223,7 +194,7 @@ func virtualDiskREAD_govmomi(c *Config, virtdisk_id string) (string, string, str
 							if fileInfo, ok := result.File[0].(*types.FileInfo); ok {
 								// Convert bytes to GB
 								virtual_disk_size = int(fileInfo.FileSize / (1024 * 1024 * 1024))
-								log.Printf("[virtualDiskREAD_govmomi] Disk size: %d GB\n", virtual_disk_size)
+								log.Printf("[virtualDiskREAD] Disk size: %d GB\n", virtual_disk_size)
 							}
 						}
 					}
@@ -241,21 +212,21 @@ func virtualDiskREAD_govmomi(c *Config, virtdisk_id string) (string, string, str
 }
 
 // growVirtualDisk_govmomi grows a virtual disk using govmomi
-func growVirtualDisk_govmomi(c *Config, virtdisk_id string, virtdisk_size string) (bool, error) {
-	log.Printf("[growVirtualDisk_govmomi]\n")
+func growVirtualDisk(c *Config, virtdisk_id string, virtdisk_size string) (bool, error) {
+	log.Printf("[growVirtualDisk]\n")
 
 	var didGrowDisk bool
 	var newDiskSize int
 
 	// Get current disk size
-	_, _, _, currentDiskSize, _, err := virtualDiskREAD_govmomi(c, virtdisk_id)
+	_, _, _, currentDiskSize, _, err := virtualDiskREAD(c, virtdisk_id)
 	if err != nil {
 		return didGrowDisk, fmt.Errorf("failed to read current disk size: %w", err)
 	}
 
 	newDiskSize, _ = strconv.Atoi(virtdisk_size)
 
-	log.Printf("[growVirtualDisk_govmomi] currentDiskSize:%d new_size:%d fullPATH: %s\n", currentDiskSize, newDiskSize, virtdisk_id)
+	log.Printf("[growVirtualDisk] currentDiskSize:%d new_size:%d fullPATH: %s\n", currentDiskSize, newDiskSize, virtdisk_id)
 
 	if currentDiskSize < newDiskSize {
 		// Parse the virtdisk_id to get datastore and path
@@ -301,15 +272,15 @@ func growVirtualDisk_govmomi(c *Config, virtdisk_id string, virtdisk_size string
 		}
 
 		didGrowDisk = true
-		log.Printf("[growVirtualDisk_govmomi] Successfully grew disk to %d GB\n", newDiskSize)
+		log.Printf("[growVirtualDisk] Successfully grew disk to %d GB\n", newDiskSize)
 	}
 
 	return didGrowDisk, nil
 }
 
 // virtualDiskDelete_govmomi deletes a virtual disk using govmomi
-func virtualDiskDelete_govmomi(c *Config, virtdisk_id string) error {
-	log.Printf("[virtualDiskDelete_govmomi]\n")
+func virtualDiskDelete(c *Config, virtdisk_id string) error {
+	log.Printf("[virtualDiskDelete]\n")
 
 	// Parse the virtdisk_id to get datastore and path
 	s := strings.Split(virtdisk_id, "/")
@@ -346,7 +317,7 @@ func virtualDiskDelete_govmomi(c *Config, virtdisk_id string) error {
 	if err != nil {
 		// Check if error is "not found" / "does not exist" - idempotent delete
 		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") {
-			log.Printf("[virtualDiskDelete_govmomi] Virtual disk already deleted: %s\n", virtdisk_id)
+			log.Printf("[virtualDiskDelete] Virtual disk already deleted: %s\n", virtdisk_id)
 			return nil
 		}
 		return fmt.Errorf("failed to delete virtual disk: %w", err)
@@ -356,12 +327,12 @@ func virtualDiskDelete_govmomi(c *Config, virtdisk_id string) error {
 	if err != nil {
 		// Check if error is "not found" / "does not exist" - idempotent delete
 		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") {
-			log.Printf("[virtualDiskDelete_govmomi] Virtual disk already deleted: %s\n", virtdisk_id)
+			log.Printf("[virtualDiskDelete] Virtual disk already deleted: %s\n", virtdisk_id)
 			return nil
 		}
 		return fmt.Errorf("failed to delete virtual disk: %w", err)
 	}
 
-	log.Printf("[virtualDiskDelete_govmomi] Successfully deleted virtual disk: %s\n", virtdisk_id)
+	log.Printf("[virtualDiskDelete] Successfully deleted virtual disk: %s\n", virtdisk_id)
 	return nil
 }

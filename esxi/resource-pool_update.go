@@ -32,7 +32,7 @@ func resourceRESOURCEPOOLUpdate(d *schema.ResourceData, m interface{}) error {
 		resource_pool_name = resource_pool_name[1:]
 	}
 
-	err = resourcePoolUpdate_govmomi(c, pool_id, resource_pool_name, cpu_min, cpu_min_expandable,
+	err = resourcePoolUpdate(c, pool_id, resource_pool_name, cpu_min, cpu_min_expandable,
 		cpu_max, cpu_shares, mem_min, mem_min_expandable, mem_max, mem_shares)
 	if err != nil {
 		return fmt.Errorf("Failed to update pool: %s\n", err)

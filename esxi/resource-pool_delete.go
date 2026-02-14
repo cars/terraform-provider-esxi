@@ -13,7 +13,7 @@ func resourceRESOURCEPOOLDelete(d *schema.ResourceData, m interface{}) error {
 
 	pool_id := d.Id()
 
-	err := resourcePoolDelete_govmomi(c, pool_id)
+	err := resourcePoolDelete(c, pool_id)
 	if err != nil {
 		log.Printf("[resourceRESOURCEPOOLDelete] Failed destroy resource pool id: %s\n", pool_id)
 		return fmt.Errorf("Failed to delete pool: %s\n", err)

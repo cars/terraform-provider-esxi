@@ -13,7 +13,7 @@ func resourceVSWITCHDelete(d *schema.ResourceData, m interface{}) error {
 
 	name := d.Id()
 
-	err := vswitchDelete_govmomi(c, name)
+	err := vswitchDelete(c, name)
 	if err != nil {
 		log.Printf("[resourceVSWITCHDelete] Failed destroy vswitch: %s\n", err)
 		return fmt.Errorf("Failed to destroy vswitch: %s\n", err)

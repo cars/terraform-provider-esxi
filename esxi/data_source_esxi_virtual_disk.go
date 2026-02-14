@@ -100,14 +100,9 @@ func dataSourceVirtualDiskRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-// findVirtualDiskInDir searches for .vmdk files in the specified directory
+// findVirtualDiskInDir searches for .vmdk files using govmomi API
 func findVirtualDiskInDir(c *Config, diskStore, dir string) (string, error) {
-	return findVirtualDiskInDir_govmomi(c, diskStore, dir)
-}
-
-// findVirtualDiskInDir_govmomi searches for .vmdk files using govmomi API
-func findVirtualDiskInDir_govmomi(c *Config, diskStore, dir string) (string, error) {
-	log.Printf("[findVirtualDiskInDir_govmomi]")
+	log.Printf("[findVirtualDiskInDir]")
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {
@@ -160,13 +155,13 @@ func findVirtualDiskInDir_govmomi(c *Config, diskStore, dir string) (string, err
 			}
 			// Return first descriptor .vmdk file
 			if strings.HasSuffix(filename, ".vmdk") {
-				log.Printf("[findVirtualDiskInDir_govmomi] Found virtual disk: %s\n", filename)
+				log.Printf("[findVirtualDiskInDir] Found virtual disk: %s\n", filename)
 				return filename, nil
 			}
 		}
 	}
 
 	// No vmdk found - return empty string (not error)
-	log.Printf("[findVirtualDiskInDir_govmomi] No virtual disk found in directory\n")
+	log.Printf("[findVirtualDiskInDir] No virtual disk found in directory\n")
 	return "", nil
 }

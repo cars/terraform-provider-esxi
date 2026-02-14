@@ -8,15 +8,6 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-func vswitchUpdate(c *Config, name string, ports int, mtu int, uplinks []string,
-	link_discovery_mode string, promiscuous_mode bool, mac_changes bool, forged_transmits bool) error {
-	return vswitchUpdate_govmomi(c, name, ports, mtu, uplinks, link_discovery_mode, promiscuous_mode, mac_changes, forged_transmits)
-}
-
-func vswitchRead(c *Config, name string) (int, int, []string, string, bool, bool, bool, error) {
-	return vswitchRead_govmomi(c, name)
-}
-
 //  Python is better... :-)
 func inArrayOfStrings(slice []string, val string) bool {
 	for _, item := range slice {
@@ -28,12 +19,12 @@ func inArrayOfStrings(slice []string, val string) bool {
 }
 
 // ============================================================================
-// Govmomi-based Network Switch Operations
+// Network Switch Operations
 // ============================================================================
 
-// vswitchCreate_govmomi creates a vswitch using govmomi
-func vswitchCreate_govmomi(c *Config, name string, ports int) error {
-	log.Printf("[vswitchCreate_govmomi] Creating vswitch %s\n", name)
+// vswitchCreate creates a vswitch using govmomi
+func vswitchCreate(c *Config, name string, ports int) error {
+	log.Printf("[vswitchCreate] Creating vswitch %s\n", name)
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {
@@ -60,13 +51,13 @@ func vswitchCreate_govmomi(c *Config, name string, ports int) error {
 		return fmt.Errorf("failed to create vswitch: %w", err)
 	}
 
-	log.Printf("[vswitchCreate_govmomi] Successfully created vswitch %s\n", name)
+	log.Printf("[vswitchCreate] Successfully created vswitch %s\n", name)
 	return nil
 }
 
-// vswitchDelete_govmomi deletes a vswitch using govmomi
-func vswitchDelete_govmomi(c *Config, name string) error {
-	log.Printf("[vswitchDelete_govmomi] Deleting vswitch %s\n", name)
+// vswitchDelete deletes a vswitch using govmomi
+func vswitchDelete(c *Config, name string) error {
+	log.Printf("[vswitchDelete] Deleting vswitch %s\n", name)
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {
@@ -88,13 +79,13 @@ func vswitchDelete_govmomi(c *Config, name string) error {
 		return fmt.Errorf("failed to delete vswitch: %w", err)
 	}
 
-	log.Printf("[vswitchDelete_govmomi] Successfully deleted vswitch %s\n", name)
+	log.Printf("[vswitchDelete] Successfully deleted vswitch %s\n", name)
 	return nil
 }
 
-// vswitchRead_govmomi reads vswitch configuration using govmomi
-func vswitchRead_govmomi(c *Config, name string) (int, int, []string, string, bool, bool, bool, error) {
-	log.Printf("[vswitchRead_govmomi] Reading vswitch %s\n", name)
+// vswitchRead reads vswitch configuration using govmomi
+func vswitchRead(c *Config, name string) (int, int, []string, string, bool, bool, bool, error) {
+	log.Printf("[vswitchRead] Reading vswitch %s\n", name)
 
 	var ports, mtu int
 	var uplinks []string
@@ -190,14 +181,14 @@ func vswitchRead_govmomi(c *Config, name string) (int, int, []string, string, bo
 		}
 	}
 
-	log.Printf("[vswitchRead_govmomi] Successfully read vswitch %s\n", name)
+	log.Printf("[vswitchRead] Successfully read vswitch %s\n", name)
 	return ports, mtu, uplinks, link_discovery_mode, promiscuous_mode, mac_changes, forged_transmits, nil
 }
 
-// vswitchUpdate_govmomi updates vswitch configuration using govmomi
-func vswitchUpdate_govmomi(c *Config, name string, ports int, mtu int, uplinks []string,
+// vswitchUpdate updates vswitch configuration using govmomi
+func vswitchUpdate(c *Config, name string, ports int, mtu int, uplinks []string,
 	link_discovery_mode string, promiscuous_mode bool, mac_changes bool, forged_transmits bool) error {
-	log.Printf("[vswitchUpdate_govmomi] Updating vswitch %s\n", name)
+	log.Printf("[vswitchUpdate] Updating vswitch %s\n", name)
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {
@@ -253,6 +244,6 @@ func vswitchUpdate_govmomi(c *Config, name string, ports int, mtu int, uplinks [
 		return fmt.Errorf("failed to update vswitch: %w", err)
 	}
 
-	log.Printf("[vswitchUpdate_govmomi] Successfully updated vswitch %s\n", name)
+	log.Printf("[vswitchUpdate] Successfully updated vswitch %s\n", name)
 	return nil
 }

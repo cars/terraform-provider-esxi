@@ -13,7 +13,7 @@ func resourcePORTGROUPDelete(d *schema.ResourceData, m interface{}) error {
 
 	name := d.Id()
 
-	err := portgroupDelete_govmomi(c, name)
+	err := portgroupDelete(c, name)
 	if err != nil {
 		log.Printf("[resourcePORTGROUPDelete] Failed destroy PORTGROUP: %s\n", err)
 		return fmt.Errorf("Failed to destroy portgroup: %s\n", err)

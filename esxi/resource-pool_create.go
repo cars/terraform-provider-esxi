@@ -46,7 +46,7 @@ func resourceRESOURCEPOOLCreate(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 
-	pool_id, err = resourcePoolCreate_govmomi(c, resource_pool_name, cpu_min, cpu_min_expandable,
+	pool_id, err = resourcePoolCreate(c, resource_pool_name, cpu_min, cpu_min_expandable,
 		cpu_max, cpu_shares, mem_min, mem_min_expandable, mem_max, mem_shares, parent_pool)
 	if err != nil {
 		d.SetId("")

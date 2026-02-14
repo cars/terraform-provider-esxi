@@ -15,7 +15,7 @@ func resourcePORTGROUPCreate(d *schema.ResourceData, m interface{}) error {
 	vswitch := d.Get("vswitch").(string)
 
 	//  Create PORTGROUP
-	err := portgroupCreate_govmomi(c, name, vswitch)
+	err := portgroupCreate(c, name, vswitch)
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("Failed to add portgroup: %s\n", err)

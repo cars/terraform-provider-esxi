@@ -45,7 +45,7 @@ func TestResourcePoolCreateReadDeleteGovmomi(t *testing.T) {
 	parentPool := ""
 
 	// Create resource pool
-	poolID, err := resourcePoolCreate_govmomi(config, poolName, cpuMin, cpuMinExpandable,
+	poolID, err := resourcePoolCreate(config, poolName, cpuMin, cpuMinExpandable,
 		cpuMax, cpuShares, memMin, memMinExpandable, memMax, memShares, parentPool)
 	if err != nil {
 		t.Fatalf("Failed to create resource pool: %v", err)
@@ -57,7 +57,7 @@ func TestResourcePoolCreateReadDeleteGovmomi(t *testing.T) {
 
 	// Read resource pool
 	readName, readCpuMin, readCpuMinExp, readCpuMax, readCpuShares,
-		readMemMin, readMemMinExp, readMemMax, readMemShares, err := resourcePoolRead_govmomi(config, poolID)
+		readMemMin, readMemMinExp, readMemMax, readMemShares, err := resourcePoolRead(config, poolID)
 	if err != nil {
 		t.Fatalf("Failed to read resource pool: %v", err)
 	}
@@ -87,13 +87,13 @@ func TestResourcePoolCreateReadDeleteGovmomi(t *testing.T) {
 		readName, readCpuMin, readCpuMax, readCpuShares, readMemMin, readMemMax, readMemShares)
 
 	// Delete resource pool
-	err = resourcePoolDelete_govmomi(config, poolID)
+	err = resourcePoolDelete(config, poolID)
 	if err != nil {
 		t.Fatalf("Failed to delete resource pool: %v", err)
 	}
 
 	// Verify deletion - read should fail
-	_, _, _, _, _, _, _, _, _, err = resourcePoolRead_govmomi(config, poolID)
+	_, _, _, _, _, _, _, _, _, err = resourcePoolRead(config, poolID)
 	if err == nil {
 		t.Error("Expected error reading deleted resource pool")
 	}
@@ -136,12 +136,12 @@ func TestResourcePoolUpdateGovmomi(t *testing.T) {
 	memMax := 512
 	memShares := "normal"
 
-	poolID, err := resourcePoolCreate_govmomi(config, poolName, cpuMin, cpuMinExpandable,
+	poolID, err := resourcePoolCreate(config, poolName, cpuMin, cpuMinExpandable,
 		cpuMax, cpuShares, memMin, memMinExpandable, memMax, memShares, "")
 	if err != nil {
 		t.Fatalf("Failed to create resource pool: %v", err)
 	}
-	defer resourcePoolDelete_govmomi(config, poolID)
+	defer resourcePoolDelete(config, poolID)
 
 	// Update pool with new values
 	newName := "test-pool-renamed"
@@ -152,7 +152,7 @@ func TestResourcePoolUpdateGovmomi(t *testing.T) {
 	newMemMax := 1024
 	newMemShares := "low"
 
-	err = resourcePoolUpdate_govmomi(config, poolID, newName, newCpuMin, cpuMinExpandable,
+	err = resourcePoolUpdate(config, poolID, newName, newCpuMin, cpuMinExpandable,
 		newCpuMax, newCpuShares, newMemMin, memMinExpandable, newMemMax, newMemShares)
 	if err != nil {
 		t.Fatalf("Failed to update resource pool: %v", err)
@@ -160,7 +160,7 @@ func TestResourcePoolUpdateGovmomi(t *testing.T) {
 
 	// Read and verify updates
 	readName, readCpuMin, _, readCpuMax, readCpuShares,
-		readMemMin, _, readMemMax, readMemShares, err := resourcePoolRead_govmomi(config, poolID)
+		readMemMin, _, readMemMax, readMemShares, err := resourcePoolRead(config, poolID)
 	if err != nil {
 		t.Fatalf("Failed to read updated resource pool: %v", err)
 	}
@@ -222,15 +222,15 @@ func TestGetPoolIDAndNameGovmomi(t *testing.T) {
 
 	// Create a test pool
 	poolName := "lookup-test-pool"
-	poolID, err := resourcePoolCreate_govmomi(config, poolName, 100, "true", 200, "normal",
+	poolID, err := resourcePoolCreate(config, poolName, 100, "true", 200, "normal",
 		256, "true", 512, "normal", "")
 	if err != nil {
 		t.Fatalf("Failed to create resource pool: %v", err)
 	}
-	defer resourcePoolDelete_govmomi(config, poolID)
+	defer resourcePoolDelete(config, poolID)
 
 	// Test getPoolID_govmomi
-	foundID, err := getPoolID_govmomi(config, poolName)
+	foundID, err := getPoolID(config, poolName)
 	if err != nil {
 		t.Fatalf("Failed to get pool ID by name: %v", err)
 	}
@@ -240,7 +240,7 @@ func TestGetPoolIDAndNameGovmomi(t *testing.T) {
 	}
 
 	// Test getPoolNAME_govmomi
-	foundName, err := getPoolNAME_govmomi(config, poolID)
+	foundName, err := getPoolNAME(config, poolID)
 	if err != nil {
 		t.Fatalf("Failed to get pool name by ID: %v", err)
 	}
@@ -250,7 +250,7 @@ func TestGetPoolIDAndNameGovmomi(t *testing.T) {
 	}
 
 	// Test with non-existent pool
-	_, err = getPoolID_govmomi(config, "non-existent-pool")
+	_, err = getPoolID(config, "non-existent-pool")
 	if err == nil {
 		t.Error("Expected error for non-existent pool")
 	}

@@ -14,21 +14,13 @@ type portgroupSecurityPolicy struct {
 	AllowPromiscuous      bool `csv:"AllowPromiscuous"`
 }
 
-func portgroupRead(c *Config, name string) (string, int, error) {
-	return portgroupRead_govmomi(c, name)
-}
-
-func portgroupSecurityPolicyRead(c *Config, name string) (*portgroupSecurityPolicy, error) {
-	return portgroupSecurityPolicyRead_govmomi(c, name)
-}
-
 // ============================================================================
-// Govmomi-based Port Group Operations
+// Port Group Operations
 // ============================================================================
 
-// portgroupCreate_govmomi creates a port group using govmomi
-func portgroupCreate_govmomi(c *Config, name string, vswitch string) error {
-	log.Printf("[portgroupCreate_govmomi] Creating portgroup %s on vswitch %s\n", name, vswitch)
+// portgroupCreate creates a port group using govmomi
+func portgroupCreate(c *Config, name string, vswitch string) error {
+	log.Printf("[portgroupCreate] Creating portgroup %s on vswitch %s\n", name, vswitch)
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {
@@ -58,13 +50,13 @@ func portgroupCreate_govmomi(c *Config, name string, vswitch string) error {
 		return fmt.Errorf("failed to create portgroup: %w", err)
 	}
 
-	log.Printf("[portgroupCreate_govmomi] Successfully created portgroup %s\n", name)
+	log.Printf("[portgroupCreate] Successfully created portgroup %s\n", name)
 	return nil
 }
 
-// portgroupDelete_govmomi deletes a port group using govmomi
-func portgroupDelete_govmomi(c *Config, name string) error {
-	log.Printf("[portgroupDelete_govmomi] Deleting portgroup %s\n", name)
+// portgroupDelete deletes a port group using govmomi
+func portgroupDelete(c *Config, name string) error {
+	log.Printf("[portgroupDelete] Deleting portgroup %s\n", name)
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {
@@ -86,13 +78,13 @@ func portgroupDelete_govmomi(c *Config, name string) error {
 		return fmt.Errorf("failed to delete portgroup: %w", err)
 	}
 
-	log.Printf("[portgroupDelete_govmomi] Successfully deleted portgroup %s\n", name)
+	log.Printf("[portgroupDelete] Successfully deleted portgroup %s\n", name)
 	return nil
 }
 
-// portgroupRead_govmomi reads port group configuration using govmomi
-func portgroupRead_govmomi(c *Config, name string) (string, int, error) {
-	log.Printf("[portgroupRead_govmomi] Reading portgroup %s\n", name)
+// portgroupRead reads port group configuration using govmomi
+func portgroupRead(c *Config, name string) (string, int, error) {
+	log.Printf("[portgroupRead] Reading portgroup %s\n", name)
 
 	var vswitch string
 	var vlan int
@@ -137,13 +129,13 @@ func portgroupRead_govmomi(c *Config, name string) (string, int, error) {
 	vswitch = portgroup.Spec.VswitchName
 	vlan = int(portgroup.Spec.VlanId)
 
-	log.Printf("[portgroupRead_govmomi] Successfully read portgroup %s\n", name)
+	log.Printf("[portgroupRead] Successfully read portgroup %s\n", name)
 	return vswitch, vlan, nil
 }
 
-// portgroupSecurityPolicyRead_govmomi reads port group security policy using govmomi
-func portgroupSecurityPolicyRead_govmomi(c *Config, name string) (*portgroupSecurityPolicy, error) {
-	log.Printf("[portgroupSecurityPolicyRead_govmomi] Reading security policy for portgroup %s\n", name)
+// portgroupSecurityPolicyRead reads port group security policy using govmomi
+func portgroupSecurityPolicyRead(c *Config, name string) (*portgroupSecurityPolicy, error) {
+	log.Printf("[portgroupSecurityPolicyRead] Reading security policy for portgroup %s\n", name)
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {
@@ -196,13 +188,13 @@ func portgroupSecurityPolicyRead_govmomi(c *Config, name string) (*portgroupSecu
 		}
 	}
 
-	log.Printf("[portgroupSecurityPolicyRead_govmomi] Successfully read security policy\n")
+	log.Printf("[portgroupSecurityPolicyRead] Successfully read security policy\n")
 	return policy, nil
 }
 
-// portgroupUpdate_govmomi updates port group configuration using govmomi
-func portgroupUpdate_govmomi(c *Config, name string, vlan int, promiscuous_mode, forged_transmits, mac_changes string) error {
-	log.Printf("[portgroupUpdate_govmomi] Updating portgroup %s\n", name)
+// portgroupUpdate updates port group configuration using govmomi
+func portgroupUpdate(c *Config, name string, vlan int, promiscuous_mode, forged_transmits, mac_changes string) error {
+	log.Printf("[portgroupUpdate] Updating portgroup %s\n", name)
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {
@@ -220,7 +212,7 @@ func portgroupUpdate_govmomi(c *Config, name string, vlan int, promiscuous_mode,
 	}
 
 	// Get current portgroup info to build the complete spec
-	vswitch, _, err := portgroupRead_govmomi(c, name)
+	vswitch, _, err := portgroupRead(c, name)
 	if err != nil {
 		return fmt.Errorf("failed to read portgroup: %w", err)
 	}
@@ -259,6 +251,6 @@ func portgroupUpdate_govmomi(c *Config, name string, vlan int, promiscuous_mode,
 		return fmt.Errorf("failed to update portgroup: %w", err)
 	}
 
-	log.Printf("[portgroupUpdate_govmomi] Successfully updated portgroup %s\n", name)
+	log.Printf("[portgroupUpdate] Successfully updated portgroup %s\n", name)
 	return nil
 }

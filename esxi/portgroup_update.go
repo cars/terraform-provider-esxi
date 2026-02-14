@@ -31,7 +31,7 @@ func resourcePORTGROUPUpdate(d *schema.ResourceData, m interface{}) error {
 		return errors.New("Error: mac_changes must be true, false or '' to inherit")
 	}
 
-	err := portgroupUpdate_govmomi(c, name, vlan, promiscuous_mode, forged_transmits, mac_changes)
+	err := portgroupUpdate(c, name, vlan, promiscuous_mode, forged_transmits, mac_changes)
 	if err != nil {
 		return fmt.Errorf("Failed to update portgroup: %s\n", err)
 	}

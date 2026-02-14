@@ -61,7 +61,7 @@ func resourceVSWITCHCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	//  Create vswitch
-	err = vswitchCreate_govmomi(c, name, ports)
+	err = vswitchCreate(c, name, ports)
 	if err != nil {
 		d.SetId("")
 		if strings.Contains(err.Error(), "already exists") {
