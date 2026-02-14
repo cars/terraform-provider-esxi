@@ -139,8 +139,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Remove useGovmomi flag and clean conditional routing
-- [ ] 06-02-PLAN.md — Inline wrappers and rename _govmomi functions
+- [x] 06-01-PLAN.md — Remove useGovmomi flag and clean conditional routing
+- [x] 06-02-PLAN.md — Inline wrappers and rename _govmomi functions
 
 **Success Criteria:**
 1. useGovmomi flag removed from portgroup, vswitch, resource_pool, virtual_disk resources (call govmomi directly)
@@ -163,7 +163,7 @@ Plans:
 | 3 - vSwitch SSH Removal | ✓ Complete (2026-02-13) | VSW-01, VSW-02, VSW-03, VSW-04 | 100% |
 | 4 - Resource Pool SSH Removal | ✓ Complete (2026-02-13) | RPOOL-01, RPOOL-02, RPOOL-03 | 100% |
 | 5 - Virtual Disk SSH Removal | ✓ Complete (2026-02-13) | VDISK-01, VDISK-02, VDISK-03, VDISK-04 | 100% |
-| 6 - Infrastructure Cleanup | Planned | INFRA-01, INFRA-02, INFRA-03, INFRA-04 | 0% |
+| 6 - Infrastructure Cleanup | ✓ Complete (2026-02-13) | INFRA-01, INFRA-02, INFRA-03, INFRA-04 | 100% |
 
 ---
 
@@ -204,4 +204,4 @@ Research flags carried forward:
 
 ---
 
-*Last updated: 2026-02-13 (Phase 6 planned)*
+*Last updated: 2026-02-13 (Phase 6 complete — all phases done)*
