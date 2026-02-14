@@ -1,6 +1,6 @@
 # Project State: Terraform Provider ESXi — Build Fix & SSH Removal
 
-**Last updated:** 2026-02-13
+**Last updated:** 2026-02-14
 **Project started:** 2026-02-12
 
 ## Project Reference
@@ -15,20 +15,20 @@
 
 ## Current Position
 
-**Phase:** 5 - Virtual Disk SSH Removal
+**Phase:** 6 - Infrastructure Cleanup
 **Plan:** 01 (Completed)
 **Status:** Complete
-**Progress:** [██████████] 100%
+**Progress:** [█████████░] 86%
 
 **Active Work:**
-- Phase 5 Plan 1 completed successfully
-- All virtual disk SSH code removed
-- 3 files modified (functions, delete, data source)
-- virtualDiskDelete_govmomi and findVirtualDiskInDir_govmomi implemented
+- Phase 6 Plan 1 completed successfully
+- useGovmomi feature flag completely removed
+- 12 files modified (config, 4 source files, 7 test files)
+- Zero useGovmomi references remain in codebase
 - Test baseline maintained (27/32 passing)
 
 **Next Action:**
-- Proceed to Phase 6 (Infrastructure Cleanup)
+- Proceed to Phase 6 Plan 2 (Function renaming)
 
 ---
 
@@ -43,9 +43,9 @@
 | 3 - vSwitch SSH Removal | 4 | 4 | 5/5 | Complete |
 | 4 - Resource Pool SSH Removal | 3 | 3 | 4/4 | Complete |
 | 5 - Virtual Disk SSH Removal | 4 | 4 | 6/6 | Complete |
-| 6 - Infrastructure Cleanup | 4 | 0 | 0/6 | Pending |
+| 6 - Infrastructure Cleanup | 4 | 1 | 2/6 | In Progress |
 
-**Overall:** 18/22 requirements completed (82%)
+**Overall:** 19/22 requirements completed (86%)
 
 ### Execution History
 
@@ -56,13 +56,14 @@
 | 03-remove-ssh-from-vswitch | 01 | 181 | 2 | 4 | 2026-02-13 |
 | 04-remove-ssh-from-resource-pool | 01 | 174 | 2 | 4 | 2026-02-13 |
 | 05-remove-ssh-from-virtual-disk | 01 | 219 | 2 | 3 | 2026-02-14 |
+| 06-infrastructure-cleanup | 01 | 217 | 2 | 12 | 2026-02-14 |
 
 ### Velocity
 
-- Plans completed: 5
+- Plans completed: 6
 - Plans in progress: 0
-- Average requirements per phase: 3.6
-- Average duration per plan: 182s (3.0 minutes)
+- Average requirements per phase: 3.7
+- Average duration per plan: 188s (3.1 minutes)
 
 ---
 
@@ -88,6 +89,8 @@
 | Implement idempotent delete in virtualDiskDelete_govmomi | 05-remove-ssh-from-virtual-disk | 2026-02-14 | DeleteVirtualDisk may encounter "not found" errors; return success for idempotent behavior | Matches SSH version behavior; safe for multiple delete attempts |
 | Skip -flat.vmdk files in datastore browser | 05-remove-ssh-from-virtual-disk | 2026-02-14 | Descriptor .vmdk is primary file; -flat.vmdk is storage backing | findVirtualDiskInDir_govmomi returns descriptor only |
 | Keep strconv import in virtual-disk_functions.go | 05-remove-ssh-from-virtual-disk | 2026-02-14 | growVirtualDisk_govmomi still uses strconv.Atoi for size conversion | Import required by govmomi implementation |
+| Remove useGovmomi field entirely | 06-infrastructure-cleanup | 2026-02-14 | No more dual-path code after Phases 2-5 completion | Simpler Config struct, no feature flag checks, zero conditionals in codebase |
+| Keep dataSourceEsxiHostReadSSH function unused | 06-infrastructure-cleanup | 2026-02-14 | Go allows unused non-exported functions; removal would require removing all its SSH helpers | No compilation errors, dead code can be cleaned in future |
 
 ### Open Questions
 
@@ -122,24 +125,36 @@ None currently.
 ### For Next Session
 
 **Context to preserve:**
-- Phase 5 complete: Virtual disk resource is SSH-free, operates entirely via govmomi
-- 18 requirements completed (82% overall progress)
-- SSH removal pattern proven across four resources (portgroup, vswitch, resource pool, virtual disk)
+- Phase 6 Plan 1 complete: useGovmomi feature flag completely removed from codebase
+- 19 requirements completed (86% overall progress)
+- Zero useGovmomi references remain anywhere
+- Guest operations use SSH directly, data sources use govmomi directly
 - 27/32 tests passing (5 pre-existing simulator limitations)
-- virtualDiskDelete_govmomi and findVirtualDiskInDir_govmomi implemented
-- Only Phase 6 (Infrastructure Cleanup) remains
+- 3 more plans remaining in Phase 6 (function renaming, SSH cleanup, final verification)
 
 **Files to review:**
-- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/phases/05-remove-ssh-from-virtual-disk/05-01-SUMMARY.md` (Phase 5 results)
-- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/ROADMAP.md` (final phase overview)
+- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/phases/06-infrastructure-cleanup/06-01-SUMMARY.md` (Phase 6 Plan 1 results)
+- `/home/cars/src/github/cars/terraform-provider-esxi/.planning/ROADMAP.md` (remaining Phase 6 plans)
 - `/home/cars/src/github/cars/terraform-provider-esxi/.planning/REQUIREMENTS.md` (Phase 6 requirements)
 
 **Expected next command:**
 ```bash
-/gsd:plan-phase 6
+/gsd:execute-phase 6 --plan 2
 ```
 
 ### Recent Activity
+
+**2026-02-14 (Phase 6 Plan 1):**
+- Phase 6 Plan 1 executed and completed (217 seconds)
+- Removed useGovmomi field from Config struct
+- Removed all 27 useGovmomi: true assignments from test files
+- Removed 6 useGovmomi conditionals from guest_functions.go (kept SSH implementations)
+- Removed useGovmomi conditional from guest-read.go (kept SSH implementation)
+- Made device info reading unconditional in data_source_esxi_guest.go (govmomi only)
+- Simplified data_source_esxi_host.go to direct govmomi call
+- Zero useGovmomi references remain in entire codebase
+- Test baseline maintained (27/32 passing)
+- SUMMARY.md created, STATE.md updated
 
 **2026-02-14 (Phase 5):**
 - Phase 5 Plan 1 executed and completed (219 seconds)
@@ -210,5 +225,5 @@ None currently.
 ---
 
 *State initialized: 2026-02-12*
-*Last execution: 2026-02-14 (Phase 5 Plan 1 complete)*
-*Ready for Phase 6 planning*
+*Last execution: 2026-02-14 (Phase 6 Plan 1 complete)*
+*Ready for Phase 6 Plan 2 execution*
