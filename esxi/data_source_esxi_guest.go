@@ -445,7 +445,7 @@ func dataSourceGuestRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("virtual_disks", vdisks)
 
 	// Read device info
-	deviceInfo, err := guestReadDevices_govmomi(c, vmid)
+	deviceInfo, err := guestReadDevices(c, vmid)
 	if err != nil {
 		log.Printf("[dataSourceGuestRead] Warning: failed to read device info: %s", err)
 	} else {

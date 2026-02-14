@@ -42,7 +42,7 @@ func TestGuestDeviceInfoBasic(t *testing.T) {
 	vmid := vms[0].Reference().Value
 
 	// Call device info function
-	deviceInfo, err := guestReadDevices_govmomi(config, vmid)
+	deviceInfo, err := guestReadDevices(config, vmid)
 	if err != nil {
 		t.Fatalf("Failed to read device info: %v", err)
 	}
@@ -115,7 +115,7 @@ func TestGuestDeviceInfoControllerFields(t *testing.T) {
 
 	vmid := vms[0].Reference().Value
 
-	deviceInfo, err := guestReadDevices_govmomi(config, vmid)
+	deviceInfo, err := guestReadDevices(config, vmid)
 	if err != nil {
 		t.Fatalf("Failed to read device info: %v", err)
 	}
@@ -175,7 +175,7 @@ func TestGuestDeviceInfoDiskFields(t *testing.T) {
 
 	vmid := vms[0].Reference().Value
 
-	deviceInfo, err := guestReadDevices_govmomi(config, vmid)
+	deviceInfo, err := guestReadDevices(config, vmid)
 	if err != nil {
 		t.Fatalf("Failed to read device info: %v", err)
 	}
