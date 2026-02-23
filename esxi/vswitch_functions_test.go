@@ -24,7 +24,6 @@ func TestVswitchCreateReadDeleteGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()
@@ -37,13 +36,13 @@ func TestVswitchCreateReadDeleteGovmomi(t *testing.T) {
 	ports := 128
 
 	// Create vswitch
-	err = vswitchCreate_govmomi(config, vswitchName, ports)
+	err = vswitchCreate(config, vswitchName, ports)
 	if err != nil {
 		t.Fatalf("Failed to create vswitch: %v", err)
 	}
 
 	// Read vswitch
-	readPorts, readMtu, readUplinks, readLinkDiscovery, readPromiscuous, readMacChanges, readForgedTransmits, err := vswitchRead_govmomi(config, vswitchName)
+	readPorts, readMtu, readUplinks, readLinkDiscovery, readPromiscuous, readMacChanges, readForgedTransmits, err := vswitchRead(config, vswitchName)
 	if err != nil {
 		t.Fatalf("Failed to read vswitch: %v", err)
 	}
@@ -72,13 +71,13 @@ func TestVswitchCreateReadDeleteGovmomi(t *testing.T) {
 		readPorts, readMtu, readUplinks, readLinkDiscovery, readPromiscuous, readMacChanges, readForgedTransmits)
 
 	// Delete vswitch
-	err = vswitchDelete_govmomi(config, vswitchName)
+	err = vswitchDelete(config, vswitchName)
 	if err != nil {
 		t.Fatalf("Failed to delete vswitch: %v", err)
 	}
 
 	// Verify deletion - read should fail
-	_, _, _, _, _, _, _, err = vswitchRead_govmomi(config, vswitchName)
+	_, _, _, _, _, _, _, err = vswitchRead(config, vswitchName)
 	if err == nil {
 		t.Error("Expected error reading deleted vswitch")
 	}
@@ -102,7 +101,6 @@ func TestVswitchUpdateGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()
@@ -115,11 +113,11 @@ func TestVswitchUpdateGovmomi(t *testing.T) {
 	ports := 128
 
 	// Create vswitch
-	err = vswitchCreate_govmomi(config, vswitchName, ports)
+	err = vswitchCreate(config, vswitchName, ports)
 	if err != nil {
 		t.Fatalf("Failed to create vswitch: %v", err)
 	}
-	defer vswitchDelete_govmomi(config, vswitchName)
+	defer vswitchDelete(config, vswitchName)
 
 	// Update vswitch
 	newMtu := 9000
@@ -129,14 +127,14 @@ func TestVswitchUpdateGovmomi(t *testing.T) {
 	macChanges := true
 	forgedTransmits := true
 
-	err = vswitchUpdate_govmomi(config, vswitchName, ports, newMtu, uplinks,
+	err = vswitchUpdate(config, vswitchName, ports, newMtu, uplinks,
 		linkDiscoveryMode, promiscuousMode, macChanges, forgedTransmits)
 	if err != nil {
 		t.Fatalf("Failed to update vswitch: %v", err)
 	}
 
 	// Read and verify
-	_, readMtu, _, readLinkDiscovery, readPromiscuous, readMacChanges, readForgedTransmits, err := vswitchRead_govmomi(config, vswitchName)
+	_, readMtu, _, readLinkDiscovery, readPromiscuous, readMacChanges, readForgedTransmits, err := vswitchRead(config, vswitchName)
 	if err != nil {
 		t.Fatalf("Failed to read updated vswitch: %v", err)
 	}

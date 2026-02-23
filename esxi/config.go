@@ -13,9 +13,8 @@ type Config struct {
 	esxiPassword    string
 	esxiPrivateKeyPath string
 
-	// New fields for govmomi
+	// govmomi client
 	govmomiClient *GovmomiClient  // Cached client connection
-	useGovmomi    bool            // Feature flag for phased migration
 }
 
 // GetGovmomiClient returns cached client or creates new one

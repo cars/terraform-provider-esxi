@@ -444,19 +444,17 @@ func dataSourceGuestRead(d *schema.ResourceData, m interface{}) error {
 	}
 	d.Set("virtual_disks", vdisks)
 
-	// Read device info (govmomi only)
-	if c.useGovmomi {
-		deviceInfo, err := guestReadDevices_govmomi(c, vmid)
-		if err != nil {
-			log.Printf("[dataSourceGuestRead] Warning: failed to read device info: %s", err)
-		} else {
-			d.Set("pci_controllers", deviceInfo.PCIControllers)
-			d.Set("network_adapters", deviceInfo.NetworkAdapters)
-			d.Set("disk_drives", deviceInfo.DiskDrives)
-			d.Set("cdrom_drives", deviceInfo.CDROMDrives)
-			d.Set("video_cards", deviceInfo.VideoCards)
-			d.Set("usb_devices", deviceInfo.USBDevices)
-		}
+	// Read device info
+	deviceInfo, err := guestReadDevices(c, vmid)
+	if err != nil {
+		log.Printf("[dataSourceGuestRead] Warning: failed to read device info: %s", err)
+	} else {
+		d.Set("pci_controllers", deviceInfo.PCIControllers)
+		d.Set("network_adapters", deviceInfo.NetworkAdapters)
+		d.Set("disk_drives", deviceInfo.DiskDrives)
+		d.Set("cdrom_drives", deviceInfo.CDROMDrives)
+		d.Set("video_cards", deviceInfo.VideoCards)
+		d.Set("usb_devices", deviceInfo.USBDevices)
 	}
 
 	return nil

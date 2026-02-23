@@ -15,26 +15,10 @@ func resourcePORTGROUPCreate(d *schema.ResourceData, m interface{}) error {
 	vswitch := d.Get("vswitch").(string)
 
 	//  Create PORTGROUP
-	if c.useGovmomi {
-		err := portgroupCreate_govmomi(c, name, vswitch)
-		if err != nil {
-			d.SetId("")
-			return fmt.Errorf("Failed to add portgroup: %s\n", err)
-		}
-	} else {
-		esxiConnInfo := getConnectionInfo(c)
-		var stdout string
-		var remote_cmd string
-		var err error
-
-		remote_cmd = fmt.Sprintf("esxcli network vswitch standard portgroup add -v \"%s\" -p \"%s\"",
-			vswitch, name)
-
-		stdout, err = runRemoteSshCommand(esxiConnInfo, remote_cmd, "create portgroup")
-		if err != nil {
-			d.SetId("")
-			return fmt.Errorf("Failed to add portgroup: %s\n%s\n", stdout, err)
-		}
+	err := portgroupCreate(c, name, vswitch)
+	if err != nil {
+		d.SetId("")
+		return fmt.Errorf("Failed to add portgroup: %s\n", err)
 	}
 
 	//  Set id

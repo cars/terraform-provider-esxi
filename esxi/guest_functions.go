@@ -10,12 +10,6 @@ import (
 )
 
 func guestGetVMID(c *Config, guest_name string) (string, error) {
-	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestGetVMID_govmomi(c, guest_name)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[guestGetVMID]\n")
 
@@ -36,12 +30,6 @@ func guestGetVMID(c *Config, guest_name string) (string, error) {
 }
 
 func guestValidateVMID(c *Config, vmid string) (string, error) {
-	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestValidateVMID_govmomi(c, vmid)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[guestValidateVMID]\n")
 
@@ -404,11 +392,6 @@ func guestReload(c *Config, vmid string) error {
 
 func guestPowerOn(c *Config, vmid string) (string, error) {
 	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestPowerOn_govmomi(c, vmid)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[guestPowerOn]\n")
 
@@ -428,12 +411,6 @@ func guestPowerOn(c *Config, vmid string) (string, error) {
 }
 
 func guestPowerOff(c *Config, vmid string, guest_shutdown_timeout int) (string, error) {
-	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestPowerOff_govmomi(c, vmid, guest_shutdown_timeout)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[guestPowerOff]\n")
 
@@ -472,12 +449,6 @@ func guestPowerOff(c *Config, vmid string, guest_shutdown_timeout int) (string, 
 }
 
 func guestPowerGetState(c *Config, vmid string) string {
-	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestPowerGetState_govmomi(c, vmid)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[guestPowerGetState]\n")
 
@@ -499,12 +470,6 @@ func guestPowerGetState(c *Config, vmid string) string {
 }
 
 func guestGetIpAddress(c *Config, vmid string, guest_startup_timeout int) string {
-	// Use govmomi if enabled
-	if c.useGovmomi {
-		return guestGetIpAddress_govmomi(c, vmid, guest_startup_timeout)
-	}
-
-	// Fallback to SSH
 	esxiConnInfo := getConnectionInfo(c)
 	log.Printf("[guestGetIpAddress]\n")
 
@@ -557,199 +522,3 @@ func guestGetIpAddress(c *Config, vmid string, guest_startup_timeout int) string
 // Govmomi-based VM Operations
 // ============================================================================
 
-// guestGetVMID_govmomi gets VM ID using govmomi
-func guestGetVMID_govmomi(c *Config, guest_name string) (string, error) {
-	log.Printf("[guestGetVMID_govmomi]\n")
-
-	gc, err := c.GetGovmomiClient()
-	if err != nil {
-		return "", fmt.Errorf("failed to get govmomi client: %w", err)
-	}
-
-	vm, err := getVMByName(gc.Context(), gc.Finder, guest_name)
-	if err != nil {
-		log.Printf("[guestGetVMID_govmomi] Failed to find VM: %s\n", err)
-		return "", fmt.Errorf("failed to find VM: %w", err)
-	}
-
-	vmid := vm.Reference().Value
-	log.Printf("[guestGetVMID_govmomi] result: %s\n", vmid)
-	return vmid, nil
-}
-
-// guestValidateVMID_govmomi validates VM ID using govmomi
-func guestValidateVMID_govmomi(c *Config, vmid string) (string, error) {
-	log.Printf("[guestValidateVMID_govmomi]\n")
-
-	gc, err := c.GetGovmomiClient()
-	if err != nil {
-		return "", fmt.Errorf("failed to get govmomi client: %w", err)
-	}
-
-	vm, err := getVMByID(gc, vmid)
-	if err != nil {
-		log.Printf("[guestValidateVMID_govmomi] Failed to validate VM ID: %s\n", err)
-		return "", fmt.Errorf("failed to validate VM ID: %w", err)
-	}
-
-	// Try to get VM name to validate it exists
-	var mo struct {
-		Name string `mo:"name"`
-	}
-	err = vm.Properties(gc.Context(), vm.Reference(), []string{"name"}, &mo)
-	if err != nil {
-		log.Printf("[guestValidateVMID_govmomi] Failed to get VM properties: %s\n", err)
-		return "", fmt.Errorf("failed to get VM properties: %w", err)
-	}
-
-	log.Printf("[guestValidateVMID_govmomi] result: %s\n", vmid)
-	return vmid, nil
-}
-
-// guestPowerOn_govmomi powers on a VM using govmomi
-func guestPowerOn_govmomi(c *Config, vmid string) (string, error) {
-	log.Printf("[guestPowerOn_govmomi]\n")
-
-	// Check current power state
-	powerState := guestPowerGetState_govmomi(c, vmid)
-	if powerState == "on" {
-		return "", nil
-	}
-
-	gc, err := c.GetGovmomiClient()
-	if err != nil {
-		return "", fmt.Errorf("failed to get govmomi client: %w", err)
-	}
-
-	vm, err := getVMByID(gc, vmid)
-	if err != nil {
-		return "", fmt.Errorf("failed to get VM: %w", err)
-	}
-
-	err = powerOnVM(gc.Context(), vm)
-	if err != nil {
-		return "", fmt.Errorf("failed to power on VM: %w", err)
-	}
-
-	time.Sleep(3 * time.Second)
-
-	// Verify power state
-	powerState = guestPowerGetState_govmomi(c, vmid)
-	if powerState != "on" {
-		return "", fmt.Errorf("VM did not power on successfully")
-	}
-
-	return "Powered on", nil
-}
-
-// guestPowerOff_govmomi powers off a VM using govmomi
-func guestPowerOff_govmomi(c *Config, vmid string, guest_shutdown_timeout int) (string, error) {
-	log.Printf("[guestPowerOff_govmomi]\n")
-
-	savedpowerstate := guestPowerGetState_govmomi(c, vmid)
-	if savedpowerstate == "off" {
-		return "", nil
-	}
-
-	gc, err := c.GetGovmomiClient()
-	if err != nil {
-		return "", fmt.Errorf("failed to get govmomi client: %w", err)
-	}
-
-	vm, err := getVMByID(gc, vmid)
-	if err != nil {
-		return "", fmt.Errorf("failed to get VM: %w", err)
-	}
-
-	// Try graceful shutdown first if timeout is set
-	if savedpowerstate == "on" && guest_shutdown_timeout != 0 {
-		err = shutdownGuest(gc.Context(), vm)
-		if err == nil {
-			time.Sleep(3 * time.Second)
-
-			// Wait for graceful shutdown
-			for i := 0; i < (guest_shutdown_timeout / 3); i++ {
-				if guestPowerGetState_govmomi(c, vmid) == "off" {
-					return "Shutdown", nil
-				}
-				time.Sleep(3 * time.Second)
-			}
-		}
-	}
-
-	// Force power off
-	err = powerOffVM(gc.Context(), vm)
-	if err != nil {
-		return "", fmt.Errorf("failed to power off VM: %w", err)
-	}
-
-	time.Sleep(1 * time.Second)
-	return "Powered off", nil
-}
-
-// guestPowerGetState_govmomi gets VM power state using govmomi
-func guestPowerGetState_govmomi(c *Config, vmid string) string {
-	log.Printf("[guestPowerGetState_govmomi]\n")
-
-	gc, err := c.GetGovmomiClient()
-	if err != nil {
-		log.Printf("[guestPowerGetState_govmomi] Failed to get govmomi client: %s\n", err)
-		return "Unknown"
-	}
-
-	vm, err := getVMByID(gc, vmid)
-	if err != nil {
-		log.Printf("[guestPowerGetState_govmomi] Failed to get VM: %s\n", err)
-		return "Unknown"
-	}
-
-	powerState, err := getPowerState(gc.Context(), vm)
-	if err != nil {
-		log.Printf("[guestPowerGetState_govmomi] Failed to get power state: %s\n", err)
-		return "Unknown"
-	}
-
-	switch powerState {
-	case "poweredOff":
-		return "off"
-	case "poweredOn":
-		return "on"
-	case "suspended":
-		return "suspended"
-	default:
-		return "Unknown"
-	}
-}
-
-// guestGetIpAddress_govmomi gets VM IP address using govmomi
-func guestGetIpAddress_govmomi(c *Config, vmid string, guest_startup_timeout int) string {
-	log.Printf("[guestGetIpAddress_govmomi]\n")
-
-	// Check if powered on
-	if guestPowerGetState_govmomi(c, vmid) != "on" {
-		return ""
-	}
-
-	gc, err := c.GetGovmomiClient()
-	if err != nil {
-		log.Printf("[guestGetIpAddress_govmomi] Failed to get govmomi client: %s\n", err)
-		return ""
-	}
-
-	vm, err := getVMByID(gc, vmid)
-	if err != nil {
-		log.Printf("[guestGetIpAddress_govmomi] Failed to get VM: %s\n", err)
-		return ""
-	}
-
-	// Try to get IP address with timeout
-	timeout := time.Duration(guest_startup_timeout) * time.Second
-	ipAddress, err := waitForGuestIPAddress(gc.Context(), vm, timeout)
-	if err != nil {
-		log.Printf("[guestGetIpAddress_govmomi] Failed to get IP address: %s\n", err)
-		return ""
-	}
-
-	log.Printf("[guestGetIpAddress_govmomi] IP address: %s\n", ipAddress)
-	return ipAddress
-}

@@ -24,7 +24,6 @@ func TestPortgroupCreateReadDeleteGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()
@@ -35,21 +34,21 @@ func TestPortgroupCreateReadDeleteGovmomi(t *testing.T) {
 
 	// First create a vswitch for the port group
 	vswitchName := "test-vswitch-for-pg"
-	err = vswitchCreate_govmomi(config, vswitchName, 128)
+	err = vswitchCreate(config, vswitchName, 128)
 	if err != nil {
 		t.Fatalf("Failed to create vswitch: %v", err)
 	}
-	defer vswitchDelete_govmomi(config, vswitchName)
+	defer vswitchDelete(config, vswitchName)
 
 	// Create port group
 	pgName := "test-portgroup"
-	err = portgroupCreate_govmomi(config, pgName, vswitchName)
+	err = portgroupCreate(config, pgName, vswitchName)
 	if err != nil {
 		t.Fatalf("Failed to create port group: %v", err)
 	}
 
 	// Read port group
-	readVswitch, readVlan, err := portgroupRead_govmomi(config, pgName)
+	readVswitch, readVlan, err := portgroupRead(config, pgName)
 	if err != nil {
 		t.Fatalf("Failed to read port group: %v", err)
 	}
@@ -67,13 +66,13 @@ func TestPortgroupCreateReadDeleteGovmomi(t *testing.T) {
 	t.Logf("Port group read: vswitch=%s, vlan=%d", readVswitch, readVlan)
 
 	// Delete port group
-	err = portgroupDelete_govmomi(config, pgName)
+	err = portgroupDelete(config, pgName)
 	if err != nil {
 		t.Fatalf("Failed to delete port group: %v", err)
 	}
 
 	// Verify deletion - read should fail
-	_, _, err = portgroupRead_govmomi(config, pgName)
+	_, _, err = portgroupRead(config, pgName)
 	if err == nil {
 		t.Error("Expected error reading deleted port group")
 	}
@@ -97,7 +96,6 @@ func TestPortgroupUpdateGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()
@@ -108,19 +106,19 @@ func TestPortgroupUpdateGovmomi(t *testing.T) {
 
 	// Create vswitch
 	vswitchName := "test-vswitch-update"
-	err = vswitchCreate_govmomi(config, vswitchName, 128)
+	err = vswitchCreate(config, vswitchName, 128)
 	if err != nil {
 		t.Fatalf("Failed to create vswitch: %v", err)
 	}
-	defer vswitchDelete_govmomi(config, vswitchName)
+	defer vswitchDelete(config, vswitchName)
 
 	// Create port group
 	pgName := "test-portgroup-update"
-	err = portgroupCreate_govmomi(config, pgName, vswitchName)
+	err = portgroupCreate(config, pgName, vswitchName)
 	if err != nil {
 		t.Fatalf("Failed to create port group: %v", err)
 	}
-	defer portgroupDelete_govmomi(config, pgName)
+	defer portgroupDelete(config, pgName)
 
 	// Update port group with VLAN and security policies
 	newVlan := 100
@@ -128,13 +126,13 @@ func TestPortgroupUpdateGovmomi(t *testing.T) {
 	forgedTransmits := "true"
 	macChanges := "true"
 
-	err = portgroupUpdate_govmomi(config, pgName, newVlan, promiscuous, forgedTransmits, macChanges)
+	err = portgroupUpdate(config, pgName, newVlan, promiscuous, forgedTransmits, macChanges)
 	if err != nil {
 		t.Fatalf("Failed to update port group: %v", err)
 	}
 
 	// Read and verify VLAN
-	_, readVlan, err := portgroupRead_govmomi(config, pgName)
+	_, readVlan, err := portgroupRead(config, pgName)
 	if err != nil {
 		t.Fatalf("Failed to read updated port group: %v", err)
 	}
@@ -144,7 +142,7 @@ func TestPortgroupUpdateGovmomi(t *testing.T) {
 	}
 
 	// Read and verify security policy
-	secPolicy, err := portgroupSecurityPolicyRead_govmomi(config, pgName)
+	secPolicy, err := portgroupSecurityPolicyRead(config, pgName)
 	if err != nil {
 		t.Fatalf("Failed to read security policy: %v", err)
 	}
@@ -192,7 +190,6 @@ func TestPortgroupSecurityPolicyReadGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()
@@ -203,22 +200,22 @@ func TestPortgroupSecurityPolicyReadGovmomi(t *testing.T) {
 
 	// Create vswitch
 	vswitchName := "test-vswitch-security"
-	err = vswitchCreate_govmomi(config, vswitchName, 128)
+	err = vswitchCreate(config, vswitchName, 128)
 	if err != nil {
 		t.Fatalf("Failed to create vswitch: %v", err)
 	}
-	defer vswitchDelete_govmomi(config, vswitchName)
+	defer vswitchDelete(config, vswitchName)
 
 	// Create port group
 	pgName := "test-portgroup-security"
-	err = portgroupCreate_govmomi(config, pgName, vswitchName)
+	err = portgroupCreate(config, pgName, vswitchName)
 	if err != nil {
 		t.Fatalf("Failed to create port group: %v", err)
 	}
-	defer portgroupDelete_govmomi(config, pgName)
+	defer portgroupDelete(config, pgName)
 
 	// Read security policy
-	secPolicy, err := portgroupSecurityPolicyRead_govmomi(config, pgName)
+	secPolicy, err := portgroupSecurityPolicyRead(config, pgName)
 	if err != nil {
 		t.Fatalf("Failed to read security policy: %v", err)
 	}
@@ -250,7 +247,6 @@ func TestPortgroupNonExistentGovmomi(t *testing.T) {
 		esxiHostSSLport: "443",
 		esxiUserName:    simulator.DefaultLogin.Username(),
 		esxiPassword:    password,
-		useGovmomi:      true,
 	}
 
 	_, err = config.GetGovmomiClient()
@@ -260,19 +256,19 @@ func TestPortgroupNonExistentGovmomi(t *testing.T) {
 	defer config.CloseGovmomiClient()
 
 	// Try to read non-existent port group
-	_, _, err = portgroupRead_govmomi(config, "non-existent-pg")
+	_, _, err = portgroupRead(config, "non-existent-pg")
 	if err == nil {
 		t.Error("Expected error for non-existent port group")
 	}
 
 	// Try to read security policy for non-existent port group
-	_, err = portgroupSecurityPolicyRead_govmomi(config, "non-existent-pg")
+	_, err = portgroupSecurityPolicyRead(config, "non-existent-pg")
 	if err == nil {
 		t.Error("Expected error for non-existent port group")
 	}
 
 	// Try to delete non-existent port group
-	err = portgroupDelete_govmomi(config, "non-existent-pg")
+	err = portgroupDelete(config, "non-existent-pg")
 	if err == nil {
 		t.Error("Expected error deleting non-existent port group")
 	}

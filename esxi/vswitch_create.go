@@ -10,11 +10,9 @@ import (
 
 func resourceVSWITCHCreate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Config)
-	esxiConnInfo := getConnectionInfo(c)
 	log.Println("[resourceVSWITCHCreate]")
 
 	var uplinks []string
-	var remote_cmd string
 	var somthingWentWrong string
 	var err error
 	var i int
@@ -63,28 +61,13 @@ func resourceVSWITCHCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	//  Create vswitch
-	if c.useGovmomi {
-		err = vswitchCreate_govmomi(c, name, ports)
-		if err != nil {
-			d.SetId("")
-			if strings.Contains(err.Error(), "already exists") {
-				return fmt.Errorf("Failed to add vswitch: %s, it already exists\n", name)
-			}
-			return fmt.Errorf("Failed to add vswitch: %s\n", err)
-		}
-	} else {
-		remote_cmd = fmt.Sprintf("esxcli network vswitch standard add -P %d -v \"%s\"",
-			ports, name)
-
-		stdout, err := runRemoteSshCommand(esxiConnInfo, remote_cmd, "create vswitch")
-		if strings.Contains(stdout, "this name already exists") {
-			d.SetId("")
+	err = vswitchCreate(c, name, ports)
+	if err != nil {
+		d.SetId("")
+		if strings.Contains(err.Error(), "already exists") {
 			return fmt.Errorf("Failed to add vswitch: %s, it already exists\n", name)
 		}
-		if err != nil {
-			d.SetId("")
-			return fmt.Errorf("Failed to add vswitch: %s\n%s\n", stdout, err)
-		}
+		return fmt.Errorf("Failed to add vswitch: %s\n", err)
 	}
 
 	//  Set id

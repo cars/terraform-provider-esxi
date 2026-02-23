@@ -18,9 +18,9 @@ type DeviceInfo struct {
 	USBDevices      []map[string]interface{}
 }
 
-// guestReadDevices_govmomi retrieves device info for a VM using govmomi
-func guestReadDevices_govmomi(c *Config, vmid string) (*DeviceInfo, error) {
-	log.Println("[guestReadDevices_govmomi]")
+// guestReadDevices retrieves device info for a VM using govmomi
+func guestReadDevices(c *Config, vmid string) (*DeviceInfo, error) {
+	log.Println("[guestReadDevices]")
 
 	gc, err := c.GetGovmomiClient()
 	if err != nil {
